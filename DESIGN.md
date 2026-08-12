@@ -13,6 +13,22 @@ nunca cinza puro. Preto e branco puros são proibidos.
 
 Escrito em OKLCH, com fallback implícito para navegadores atuais (suporte amplo desde 2023).
 
+**Nunca usar `opacity` para atenuar texto.** Foi assim que os itens entregues
+ficaram ilegíveis: `opacity: .55` derrubou o contraste de nomes de publicação para
+3.73, abaixo do mínimo de 4.5. Para recuar um elemento, trocar a cor por `--muted`
+(que é medida e aprovada) ou dessaturar só a imagem. A opacidade some com qualquer
+garantia de contraste, porque o valor final depende do que está atrás.
+
+## Tema
+
+Três estados, escolha do usuário, guardada em `localStorage` sob `pedidos-tema`:
+claro, escuro e automático (padrão). O tema resolvido é escrito em `data-tema` no
+`<html>` por um script no `<head>`, antes da primeira pintura, para a tela não
+piscar clara ao abrir no escuro.
+
+`color-scheme` acompanha o tema, senão os controles nativos (seletor de data, lista
+de sugestões) renderizam no esquema errado e ficam ilegíveis.
+
 | Papel | Claro | Escuro |
 |---|---|---|
 | Fundo | `oklch(97.2% 0.004 155)` | `oklch(19.5% 0.007 155)` |

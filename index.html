@@ -6,6 +6,17 @@
 <title>Pedidos de Publicações</title>
 <meta name="theme-color" content="#2f6f4e">
 <link rel="manifest" href="manifest.webmanifest">
+<script>
+/* Aplica o tema antes de qualquer pintura: sem isso a tela pisca clara
+   por um instante ao abrir no escuro. Precisa rodar aqui no <head>. */
+(function(){
+  var pref = "sistema";
+  try{ pref = localStorage.getItem("pedidos-tema") || "sistema"; }catch(e){}
+  var escuro = pref === "escuro" ||
+    (pref === "sistema" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.tema = escuro ? "escuro" : "claro";
+})();
+</script>
 <link rel="apple-touch-icon" href="icone-192.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f6f4e'/><path d='M26 28h20a8 8 0 018 8v40a8 8 0 00-8-8H26zM74 28H54a8 8 0 00-8 8v40a8 8 0 018-8h20z' fill='white'/></svg>">
 <style>
@@ -30,9 +41,12 @@
     --sh:0 1px 2px oklch(24% 0.012 155 / .06), 0 1px 3px oklch(24% 0.012 155 / .04);
     --ease:cubic-bezier(0.16, 1, 0.3, 1);
     --barra:0px; /* altura da navegacao inferior; passa a valer no celular */
+    color-scheme: light; /* controles nativos (data, lista) seguem o tema */
   }
-  @media (prefers-color-scheme: dark){
-    :root{
+  /* O tema e resolvido em JS e escrito em data-tema no <html>, antes da pintura.
+     Assim "automatico" continua valendo, mas a escolha manual tem a ultima palavra. */
+  :root[data-tema="escuro"]{
+      color-scheme: dark;
       --bg:      oklch(19.5% 0.007 155);
       --card:    oklch(23.5% 0.008 155);
       --ink:     oklch(93%   0.006 155);
@@ -49,7 +63,6 @@
       --danger:  oklch(72% 0.13  27);
 
       --sh:0 1px 3px oklch(10% 0.01 155 / .5);
-    }
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -84,7 +97,19 @@
 
   /* menu de acoes: inline no computador, menu suspenso no celular */
   .acoes-btn{display:none}
-  .acoes-itens{display:flex;gap:8px}
+  .acoes-itens{display:flex;gap:8px;align-items:center}
+
+  /* seletor de aparencia */
+  .tema{display:flex;align-items:center;gap:8px}
+  .tema-rot{display:none;font-size:12.5px;font-weight:650;color:var(--muted)}
+  .tema-ops{display:flex;gap:2px;padding:3px;background:var(--bg);
+            border:1px solid var(--line);border-radius:10px}
+  .tema-ops button{
+    border:0;background:transparent;color:var(--muted);cursor:pointer;
+    padding:5px 10px;border-radius:7px;font-size:13px;white-space:nowrap;
+    transition:background .16s var(--ease),color .16s var(--ease)}
+  .tema-ops button[aria-checked="true"]{
+    background:var(--card);color:var(--brand);font-weight:650;box-shadow:var(--sh)}
 
   /* foco sempre visivel; nunca outline:none */
   :where(button,input,select,textarea,summary,[tabindex]):focus-visible{
@@ -117,7 +142,11 @@
   .who .meta{font-size:12.5px;color:var(--muted);margin-top:1px}
 
   .item{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
-  .item.done{opacity:.55}
+  /* Entregue recua sem ficar ilegivel: cor propria, nunca opacidade.
+     opacity derruba o contraste do texto abaixo do minimo legivel. */
+  .item.done .titulo{color:var(--muted)}
+  .item.done .thumb{filter:saturate(.35)}
+  .item.done .qty{background:var(--gray-bg);color:var(--gray)}
   .item .txt{flex:1;min-width:0}
   .item .titulo{font-size:14.5px;line-height:1.3}
   .item .sub{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
@@ -250,6 +279,12 @@
     .acoes.aberto .acoes-itens{display:flex;animation:surge .16s var(--ease)}
     @keyframes surge{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
     .acoes-itens .btn{width:100%;text-align:left;min-height:46px;box-shadow:none;border:0}
+    /* no celular o seletor de tema abre em bloco, com rotulo e alvos de 44px */
+    .tema{flex-direction:column;align-items:stretch;gap:6px;
+          padding:6px 8px 10px;border-bottom:1px solid var(--line);margin-bottom:2px}
+    .tema-rot{display:block}
+    .tema-ops{width:100%}
+    .tema-ops button{flex:1;min-height:40px;font-size:13.5px;padding:5px 6px}
 
     /* --- navegacao fixa no rodape --- */
     .tabs{
@@ -433,6 +468,14 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
       </button>
       <div class="acoes-itens">
+        <div class="tema" role="radiogroup" aria-label="Aparência">
+          <span class="tema-rot">Aparência</span>
+          <div class="tema-ops">
+            <button type="button" role="radio" data-tema-op="claro"   aria-checked="false">Claro</button>
+            <button type="button" role="radio" data-tema-op="escuro"  aria-checked="false">Escuro</button>
+            <button type="button" role="radio" data-tema-op="sistema" aria-checked="true">Automático</button>
+          </div>
+        </div>
         <button class="btn sm" id="btnPrint">Imprimir</button>
         <button class="btn sm" id="btnExport">Backup</button>
         <button class="btn sm" id="btnImport">Restaurar</button>
@@ -1268,6 +1311,46 @@ $("#q").addEventListener("input", renderLista);
 $("#fOrder").addEventListener("change", renderLista);
 $("#btnPrint").onclick = ()=> window.print();
 
+/* ---------- aparência ---------- */
+const KEY_TEMA = "pedidos-tema";
+const mqEscuro = matchMedia("(prefers-color-scheme: dark)");
+
+function prefTema(){
+  try{ return localStorage.getItem(KEY_TEMA) || "sistema"; }catch(e){ return "sistema"; }
+}
+function sistemaEscuro(){
+  // consulta na hora: o objeto guardado pode ficar com valor velho
+  return matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function aplicaTema(){
+  const pref = prefTema();
+  const escuro = pref === "escuro" || (pref === "sistema" && sistemaEscuro());
+  document.documentElement.dataset.tema = escuro ? "escuro" : "claro";
+  // a barra do navegador acompanha o fundo do app; convertido para rgb()
+  // porque nem todo navegador aceita oklch() em <meta theme-color>
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute("content", escuro ? "rgb(28, 33, 30)" : "rgb(243, 246, 242)");
+  document.querySelectorAll("[data-tema-op]").forEach(b=>
+    b.setAttribute("aria-checked", String(b.dataset.temaOp === pref)));
+}
+document.querySelectorAll("[data-tema-op]").forEach(b=>{
+  b.onclick = ()=>{
+    try{ localStorage.setItem(KEY_TEMA, b.dataset.temaOp); }catch(e){}
+    aplicaTema();
+    toast(b.dataset.temaOp === "sistema"
+      ? "Aparência: acompanha o aparelho"
+      : "Aparência: " + b.textContent.toLowerCase());
+  };
+});
+/* Com "Automático" ligado, seguir o aparelho quando ele troca sozinho (noite/dia).
+   Duas redes: o evento do sistema e, caso ele não chegue (acontece quando o app
+   fica em segundo plano), uma conferida ao voltar para a tela. */
+mqEscuro.addEventListener("change", ()=>{ if(prefTema() === "sistema") aplicaTema(); });
+document.addEventListener("visibilitychange", ()=>{
+  if(!document.hidden && prefTema() === "sistema") aplicaTema();
+});
+aplicaTema();
+
 /* menu de ações do topo: só existe como menu no celular */
 const menu = $("#menuAcoes");
 function fechaMenu(){ menu.classList.remove("aberto"); $("#btnMenu").setAttribute("aria-expanded","false"); }
@@ -1277,7 +1360,10 @@ $("#btnMenu").onclick = ev=>{
   menu.classList.toggle("aberto", abriu);
   $("#btnMenu").setAttribute("aria-expanded", String(abriu));
 };
-menu.addEventListener("click", ev=>{ if(ev.target.closest(".acoes-itens")) fechaMenu(); });
+/* trocar o tema mantém o menu aberto: dá para comparar claro e escuro na hora */
+menu.addEventListener("click", ev=>{
+  if(ev.target.closest(".acoes-itens") && !ev.target.closest(".tema")) fechaMenu();
+});
 document.addEventListener("click", ev=>{ if(!menu.contains(ev.target)) fechaMenu(); });
 
 /* ---------- backup ---------- */
