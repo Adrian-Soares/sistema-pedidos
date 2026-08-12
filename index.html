@@ -9,26 +9,46 @@
 <link rel="apple-touch-icon" href="icone-192.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f6f4e'/><path d='M26 28h20a8 8 0 018 8v40a8 8 0 00-8-8H26zM74 28H54a8 8 0 00-8 8v40a8 8 0 018-8h20z' fill='white'/></svg>">
 <style>
+  /* Neutros tintados na direcao do verde. Preto e branco puros sao proibidos. */
   :root{
-    --bg:#f4f6f8; --card:#fff; --ink:#1a2027; --muted:#68737d; --line:#e2e6ea;
-    --brand:#2f6f4e; --brand-ink:#fff; --brand-soft:#e8f2ed;
-    --amber:#9a6b00; --amber-bg:#fdf3d8;
-    --blue:#1f5f9e;  --blue-bg:#e3eefa;
-    --green:#2f6f4e; --green-bg:#e2f1e9;
-    --gray:#5a6570;  --gray-bg:#eceff2;
-    --danger:#b3261e;
-    --r:14px; --sh:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+    --bg:      oklch(97.2% 0.004 155);
+    --card:    oklch(99.6% 0.002 155);
+    --ink:     oklch(24%   0.012 155);
+    --muted:   oklch(52%   0.012 155);
+    --line:    oklch(91%   0.006 155);
+    --brand:   oklch(48%   0.088 155);
+    --brand-ink: oklch(99% 0.004 155);
+    --brand-soft: oklch(94.5% 0.021 155);
+
+    --amber:   oklch(52% 0.09  75);  --amber-bg: oklch(95% 0.035 85);
+    --blue:    oklch(48% 0.10 245);  --blue-bg:  oklch(94.5% 0.028 245);
+    --green:   oklch(48% 0.088 155); --green-bg: oklch(94.5% 0.032 155);
+    --gray:    oklch(50% 0.010 155); --gray-bg:  oklch(93.5% 0.005 155);
+    --danger:  oklch(52% 0.16  27);
+
+    --r:14px;
+    --sh:0 1px 2px oklch(24% 0.012 155 / .06), 0 1px 3px oklch(24% 0.012 155 / .04);
+    --ease:cubic-bezier(0.16, 1, 0.3, 1);
+    --barra:0px; /* altura da navegacao inferior; passa a valer no celular */
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#14181c; --card:#1c2126; --ink:#e8ecef; --muted:#9aa5b0; --line:#2b3238;
-      --brand:#57a37b; --brand-ink:#0d1114; --brand-soft:#23312a;
-      --amber:#e0b25a; --amber-bg:#3a3020;
-      --blue:#7fb2e0;  --blue-bg:#1e2c39;
-      --green:#71bf95; --green-bg:#1e3128;
-      --gray:#a3adb7;  --gray-bg:#282f35;
-      --danger:#f2857c;
-      --sh:0 1px 3px rgba(0,0,0,.4);
+      --bg:      oklch(19.5% 0.007 155);
+      --card:    oklch(23.5% 0.008 155);
+      --ink:     oklch(93%   0.006 155);
+      --muted:   oklch(70%   0.012 155);
+      --line:    oklch(30%   0.009 155);
+      --brand:   oklch(72%   0.095 155);
+      --brand-ink: oklch(17% 0.010 155);
+      --brand-soft: oklch(28% 0.030 155);
+
+      --amber:   oklch(80% 0.085  80); --amber-bg: oklch(30% 0.038 75);
+      --blue:    oklch(78% 0.075 245); --blue-bg:  oklch(29% 0.038 245);
+      --green:   oklch(78% 0.085 155); --green-bg: oklch(29% 0.040 155);
+      --gray:    oklch(74% 0.010 155); --gray-bg:  oklch(28% 0.006 155);
+      --danger:  oklch(72% 0.13  27);
+
+      --sh:0 1px 3px oklch(10% 0.01 155 / .5);
     }
   }
   *{box-sizing:border-box}
@@ -57,8 +77,20 @@
   .tabs{display:flex;gap:4px;background:var(--card);padding:4px;border-radius:12px;
         border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:14px;overflow:auto}
   .tabs button{flex:1;min-width:104px;border:0;background:transparent;padding:9px 12px;
-        border-radius:9px;cursor:pointer;font-weight:500;color:var(--muted)}
+        border-radius:9px;cursor:pointer;font-weight:500;color:var(--muted);
+        transition:background .16s var(--ease),color .16s var(--ease)}
   .tabs button[aria-selected="true"]{background:var(--brand-soft);color:var(--brand);font-weight:650}
+  .tabs button svg,.tabs button .lbl-curto{display:none}
+
+  /* menu de acoes: inline no computador, menu suspenso no celular */
+  .acoes-btn{display:none}
+  .acoes-itens{display:flex;gap:8px}
+
+  /* foco sempre visivel; nunca outline:none */
+  :where(button,input,select,textarea,summary,[tabindex]):focus-visible{
+    outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+  .btn{transition:border-color .16s var(--ease),transform .12s var(--ease)}
+  .btn:active{transform:scale(.97)}
 
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
   .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
@@ -88,7 +120,8 @@
   .item.done{opacity:.55}
   .item .txt{flex:1;min-width:0}
   .item .titulo{font-size:14.5px;line-height:1.3}
-  .item .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .item .sub{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+             font-size:12px;color:var(--muted);margin-top:5px}
   .item .acts{display:flex;gap:6px;align-items:center;flex-shrink:0}
 
   .thumb{width:42px;height:56px;border-radius:6px;object-fit:cover;background:var(--bg);
@@ -189,19 +222,202 @@
   #lightbox.on{display:flex}
   #lightbox img{max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 
+  /* ===================== CELULAR =====================
+     Alvo real: 360px. Coluna unica, navegacao no rodape (zona do polegar),
+     alvos de 44px, folha inferior no lugar de modal, tabelas viram listas. */
   @media (max-width:640px){
-    .wrap{padding:12px 12px 92px}
-    .stats{grid-template-columns:repeat(2,1fr)}
-    header.top h1{font-size:18px}
-    .row{flex-direction:column;gap:0}
-    table{font-size:13.5px}
-    th,td{padding:8px 5px}
-    .catgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+
+    /* folga extra no fim: a acao flutuante nao pode cobrir o ultimo cartao */
+    .wrap{padding:10px 14px calc(var(--barra) + 82px)}
+    :root{--barra:64px}
+
+    /* --- topo: so leitura, sem acao competindo --- */
+    header.top{gap:8px;margin-bottom:12px;align-items:flex-start}
+    header.top h1{font-size:19px}
+    header.top .sub{font-size:12px}
+
+    .acoes{position:relative}
+    .acoes-btn{
+      width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+      border:1px solid var(--line);border-radius:12px;background:var(--card);
+      cursor:pointer;color:var(--ink);margin-top:-2px;padding:0}
+    .acoes-btn svg{width:20px;height:20px;fill:currentColor}
+    .acoes.aberto .acoes-btn{border-color:var(--brand);color:var(--brand)}
+    .acoes-itens{
+      display:none;position:absolute;right:0;top:52px;z-index:20;flex-direction:column;
+      gap:4px;padding:6px;background:var(--card);border:1px solid var(--line);
+      border-radius:14px;box-shadow:0 12px 28px oklch(20% 0.01 155 / .18);min-width:176px}
+    .acoes.aberto .acoes-itens{display:flex;animation:surge .16s var(--ease)}
+    @keyframes surge{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+    .acoes-itens .btn{width:100%;text-align:left;min-height:46px;box-shadow:none;border:0}
+
+    /* --- navegacao fixa no rodape --- */
+    .tabs{
+      position:fixed;left:0;right:0;bottom:0;z-index:30;margin:0;border-radius:0;
+      border:0;border-top:1px solid var(--line);padding:0;gap:0;overflow:visible;
+      background:var(--card);
+      padding-bottom:env(safe-area-inset-bottom,0px);
+      box-shadow:0 -1px 12px oklch(20% 0.01 155 / .07)}
+    .tabs button{
+      flex:1;min-width:0;flex-direction:column;display:flex;align-items:center;
+      justify-content:center;gap:3px;height:64px;border-radius:0;padding:6px 2px;
+      color:var(--muted);background:transparent;font-weight:500}
+    .tabs button svg{
+      display:block;width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;
+      stroke-linecap:round;stroke-linejoin:round;
+      transition:transform .18s var(--ease)}
+    .tabs button .lbl-longo{display:none}
+    .tabs button .lbl-curto{display:block;font-size:11px;line-height:1.1;
+      max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tabs button[aria-selected="true"]{background:transparent;color:var(--brand);font-weight:650}
+    .tabs button[aria-selected="true"] svg{transform:translateY(-1px) scale(1.06)}
+    .tabs button:active svg{transform:scale(.9)}
+
+    /* --- filtros de status: fila horizontal, nao grade de 2x2 --- */
+    .stats{
+      display:flex;gap:7px;overflow-x:auto;margin:0 -14px 12px;padding:1px 14px 3px;
+      scrollbar-width:none;-webkit-overflow-scrolling:touch}
+    .stats::-webkit-scrollbar{display:none}
+    .stat{
+      flex:0 0 auto;display:flex;align-items:baseline;gap:6px;min-height:44px;
+      padding:11px 14px;border-radius:999px;box-shadow:none}
+    .stat b{font-size:15px}
+    .stat span{font-size:12px;text-transform:none;letter-spacing:0}
+    .stat.on{color:var(--brand)}
+
+    .filters{gap:7px;margin-bottom:10px}
+    .filters input[type=search]{flex:1 1 100%;font-size:16px;min-height:46px}
+    .filters select{flex:1;font-size:15px;min-height:44px}
+
+    /* --- cartao de pedido --- */
+    .card{padding:13px 14px 6px;border-radius:16px}
+    .who .name{font-size:16.5px}
+    .card-h .btn{min-height:44px;padding:8px 15px}
+
+    .item{gap:11px;padding:11px 0;align-items:flex-start}
+    .item .txt{padding-top:1px}
+    .item .titulo{font-size:15px}
+    .thumb{width:44px;height:59px}
+
+    /* so a acao fica na direita, como alvo de 44px; o status vai sob o titulo */
+    .item .acts{padding-top:2px}
+    .item .acts .btn{
+      width:46px;height:46px;padding:0;font-size:0;
+      display:flex;align-items:center;justify-content:center;border-radius:13px}
+    .item .acts .btn::after{content:"→";font-size:20px;line-height:1}
+    .item .sub{margin-top:6px}
+    .item .sub .tag{font-size:11.5px;padding:3px 9px}
+
+    .card-f .btn{min-height:46px;flex:1}
+    .obs{font-size:13.5px}
+
+    /* --- tabelas viram linhas de lista --- */
+    .panel{padding:14px 14px 6px;border-radius:16px}
+    #v-resumo table, #v-resumo tbody, #v-resumo tr, #v-resumo td,
+    #v-irmaos table, #v-irmaos tbody, #v-irmaos tr, #v-irmaos td{display:block;width:auto}
+    #v-resumo thead, #v-irmaos thead{display:none}
+    #v-resumo tr, #v-irmaos tr{
+      position:relative;padding:11px 62px 11px 0;border-bottom:1px solid var(--line)}
+    #v-resumo tr:last-child, #v-irmaos tr:last-child{border-bottom:0}
+    #v-resumo td, #v-irmaos td{border:0;padding:0}
+    #v-resumo td.idi{font-size:12.5px;color:var(--muted);margin-top:2px}
+    #v-resumo td.idi.padrao{display:none}
+    #v-resumo td.num, #v-irmaos td.num{
+      position:absolute;top:11px;right:0;font-size:17px;font-weight:700;color:var(--brand)}
+    /* o que importa em pé no salão é quanto falta, não quantos já passaram */
+    #v-irmaos td.tot{display:none}
+    #v-irmaos td.ult{font-size:12.5px;color:var(--muted);margin-top:2px}
+    #v-irmaos tr{padding-right:74px}
+    #v-irmaos td.num{
+      top:50%;transform:translateY(-50%);text-align:right;line-height:1.05}
+    #v-irmaos td.num::after{
+      content:"em aberto";display:block;font-size:10px;font-weight:600;
+      letter-spacing:.3px;color:var(--muted)}
+    #v-irmaos td.num.zero{color:var(--muted)}
+
+    /* --- catalogo --- */
+    .catgrid{grid-template-columns:repeat(2,1fr);gap:9px}
+    .catitem{padding:8px;border-radius:14px}
+    .catitem img,.catitem .noimg{aspect-ratio:4/5}
+    .catitem .nome{font-size:12.5px;margin-top:7px}
+    .catbar{gap:7px}
+    .catbar input{flex:1 1 100%;font-size:16px;min-height:46px}
+    .catbar select{flex:1;min-height:44px}
+    .catbar .btn{min-height:44px}
+    /* a acao flutuante ja cria publicacao: o botao na barra seria repetido */
+    #btnNovaPub{display:none}
+    #btnRestaurarCat{flex:0 0 auto}
+
+    /* --- formulario vira folha inferior, salvar fica no polegar --- */
+    dialog{
+      max-width:none;width:100%;margin:0 auto;top:auto;bottom:0;
+      max-height:94dvh;border-radius:0}
+    .sheet{
+      border-radius:20px 20px 0 0;padding:8px 16px 0;max-height:94dvh;
+      display:flex;flex-direction:column;
+      animation:sobe .26s var(--ease)}
+    @keyframes sobe{from{transform:translateY(14px);opacity:.4}to{transform:none;opacity:1}}
+    /* alca de arraste, so sinalizacao visual */
+    .sheet::before{
+      content:"";display:block;width:38px;height:4px;border-radius:99px;
+      background:var(--line);margin:2px auto 12px;flex:none}
+    .sheet h2{font-size:18px;margin-bottom:14px;flex:none}
+    .sheet > *:not(.sheet-f){flex:none}
+    .field input,.field select,.field textarea{font-size:16px;min-height:48px;border-radius:12px}
+    .field textarea{min-height:76px}
+    .sheet-f{
+      position:sticky;bottom:0;flex:none;margin:14px -16px 0;padding:12px 16px;
+      padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+      background:var(--card);border-top:1px solid var(--line);gap:8px}
+    .sheet-f .btn{min-height:50px;flex:1;justify-content:center;border-radius:13px}
+    .sheet-f .btn.primary{flex:1.6;font-size:16px}
+    .sheet-f .spacer{display:none}
+    .sheet-f .btn.danger{flex:0 0 auto;padding:0 15px}
+
+    #itens{overflow:visible}
+    .linha{padding:9px;border-radius:14px}
+    .linha .lc input{font-size:16px;min-height:44px}
+    .linha .lrow input.q{flex:0 0 66px;max-width:66px;text-align:center}
+    .linha .lx{width:34px;height:44px;font-size:22px}
+    #btnAddItem{width:100%;min-height:46px;margin-top:2px}
+
+    /* --- acao primaria, acima da barra, ao alcance do polegar --- */
+    .fab{
+      right:14px;bottom:calc(var(--barra) + 14px + env(safe-area-inset-bottom,0px));
+      padding:15px 21px;font-size:15.5px;border-radius:16px;
+      box-shadow:0 8px 22px oklch(20% 0.01 155 / .28)}
+    .fab:active{transform:scale(.96)}
+
+    .toast{bottom:calc(var(--barra) + 76px);font-size:13.5px}
+    .empty{padding:34px 18px}
+  }
+
+  /* telas bem estreitas (360px e abaixo) */
+  @media (max-width:360px){
+    .wrap{padding-left:11px;padding-right:11px}
+    .stats{margin-left:-11px;margin-right:-11px;padding-left:11px;padding-right:11px}
+    .tabs button .lbl-curto{font-size:10px}
+    .fab{padding:14px 17px;font-size:15px}
+    .catgrid{gap:8px}
+  }
+
+  /* toque: nada depende de hover */
+  @media (hover:none){
+    .btn:hover{border-color:var(--line)}
+    .catitem:hover{border-color:var(--line)}
+    .btn:active{transform:scale(.97)}
+    .catitem:active{border-color:var(--brand)}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important;animation-iteration-count:1 !important;
+      transition-duration:.01ms !important}
   }
 
   @media print{
     body{background:#fff}
-    .tabs,.filters,.stats,.fab,.btn,header.top .actions,.toast,.catbar,.item .acts{display:none !important}
+    .tabs,.filters,.stats,.fab,.btn,.acoes,.toast,.catbar,.item .acts{display:none !important}
     .panel,.card{box-shadow:none;border-color:#ccc;break-inside:avoid}
     .wrap{max-width:none;padding:0}
   }
@@ -212,19 +428,36 @@
 
   <header class="top">
     <h1>Pedidos de Publicações<span class="sub" id="subtitle">—</span></h1>
-    <div class="actions">
-      <button class="btn sm" id="btnPrint">Imprimir</button>
-      <button class="btn sm" id="btnExport">Backup</button>
-      <button class="btn sm" id="btnImport">Restaurar</button>
+    <div class="acoes" id="menuAcoes">
+      <button class="acoes-btn" id="btnMenu" aria-label="Mais ações" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      </button>
+      <div class="acoes-itens">
+        <button class="btn sm" id="btnPrint">Imprimir</button>
+        <button class="btn sm" id="btnExport">Backup</button>
+        <button class="btn sm" id="btnImport">Restaurar</button>
+      </div>
       <input type="file" id="fileImport" accept="application/json" hidden>
     </div>
   </header>
 
   <nav class="tabs" role="tablist">
-    <button role="tab" aria-selected="true"  data-view="pedidos">Pedidos</button>
-    <button role="tab" aria-selected="false" data-view="resumo">Resumo p/ pedir</button>
-    <button role="tab" aria-selected="false" data-view="irmaos">Por irmão</button>
-    <button role="tab" aria-selected="false" data-view="catalogo">Publicações</button>
+    <button role="tab" aria-selected="true" data-view="pedidos">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8a2 2 0 012 2v13a1 1 0 01-1.5.87L12 17.5l-4.5 2.37A1 1 0 016 19V6a2 2 0 012-2z"/></svg>
+      <span class="lbl-curto">Pedidos</span><span class="lbl-longo">Pedidos</span>
+    </button>
+    <button role="tab" aria-selected="false" data-view="resumo">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M5 12h9M5 19h14M17.5 10v6M14.5 13h6"/></svg>
+      <span class="lbl-curto">Resumo</span><span class="lbl-longo">Resumo p/ pedir</span>
+    </button>
+    <button role="tab" aria-selected="false" data-view="irmaos">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0113 0"/></svg>
+      <span class="lbl-curto">Irmãos</span><span class="lbl-longo">Por irmão</span>
+    </button>
+    <button role="tab" aria-selected="false" data-view="catalogo">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 015.5 4H11v16H5.5A1.5 1.5 0 014 18.5zM20 5.5A1.5 1.5 0 0018.5 4H13v16h5.5a1.5 1.5 0 001.5-1.5z"/></svg>
+      <span class="lbl-curto">Publicações</span><span class="lbl-longo">Publicações</span>
+    </button>
   </nav>
 
   <!-- ============ PEDIDOS ============ -->
@@ -625,14 +858,17 @@ function cardPedido(itens){
     if(p.qtd > 1) tit.appendChild(el("span","qty", p.qtd + "×"));
     tit.appendChild(document.createTextNode(p.pub));
     txt.appendChild(tit);
-    const sub = [];
-    if(p.idioma && p.idioma !== "Português") sub.push(p.idioma);
-    if(p.status === "entregue" && p.dataEntrega) sub.push("entregue em " + fmtData(p.dataEntrega));
-    if(sub.length) txt.appendChild(el("div","sub", sub.join(" · ")));
+    // status junto do título: fica legível sem espremer a linha no celular
+    const sub = el("div","sub");
+    sub.appendChild(el("span","tag t-"+p.status, STATUS[p.status].label));
+    const extra = [];
+    if(p.idioma && p.idioma !== "Português") extra.push(p.idioma);
+    if(p.status === "entregue" && p.dataEntrega) extra.push("entregue em " + fmtData(p.dataEntrega));
+    if(extra.length) sub.appendChild(el("span",null, extra.join(" · ")));
+    txt.appendChild(sub);
     it.appendChild(txt);
 
     const acts = el("div","acts");
-    acts.appendChild(el("span","tag t-"+p.status, STATUS[p.status].label));
     const prox = STATUS[p.status].next;
     if(prox){
       const b = el("button","btn sm primary","→ " + STATUS[p.status].nextLabel);
@@ -692,7 +928,8 @@ function renderResumo(){
       info.appendChild(el("div","names", o.nomes.join(", ")));
       cell.appendChild(info);
       td.appendChild(cell); tr.appendChild(td);
-      tr.appendChild(el("td",null,o.idioma));
+      // no celular o idioma padrão é ruído: só aparece quando foge do comum
+      tr.appendChild(el("td", o.idioma === "Português" ? "idi padrao" : "idi", o.idioma));
       tr.appendChild(el("td","num",String(o.qtd)));
       tb.appendChild(tr);
     });
@@ -744,9 +981,9 @@ function renderIrmaos(){
     td.appendChild(el("div",null,o.nome));
     if(o.grupo) td.appendChild(el("div","names",o.grupo));
     tr.appendChild(td);
-    tr.appendChild(el("td","num",String(o.total)));
-    tr.appendChild(el("td","num",String(o.abertos)));
-    tr.appendChild(el("td",null,fmtData(o.ultimo)));
+    tr.appendChild(el("td","num tot",String(o.total)));
+    tr.appendChild(el("td","num" + (o.abertos ? "" : " zero"),String(o.abertos)));
+    tr.appendChild(el("td","ult",fmtData(o.ultimo)));
     tr.style.cursor = "pointer";
     tr.onclick = ()=>{ $("#q").value = o.nome; filtroStatus=""; irPara("pedidos"); renderStats(); renderLista(); };
     tb.appendChild(tr);
@@ -1030,6 +1267,18 @@ $("#fabNew").onclick = ()=> $("#fabNew").dataset.acao === "pub" ? abrirFormPub(n
 $("#q").addEventListener("input", renderLista);
 $("#fOrder").addEventListener("change", renderLista);
 $("#btnPrint").onclick = ()=> window.print();
+
+/* menu de ações do topo: só existe como menu no celular */
+const menu = $("#menuAcoes");
+function fechaMenu(){ menu.classList.remove("aberto"); $("#btnMenu").setAttribute("aria-expanded","false"); }
+$("#btnMenu").onclick = ev=>{
+  ev.stopPropagation();
+  const abriu = !menu.classList.contains("aberto");
+  menu.classList.toggle("aberto", abriu);
+  $("#btnMenu").setAttribute("aria-expanded", String(abriu));
+};
+menu.addEventListener("click", ev=>{ if(ev.target.closest(".acoes-itens")) fechaMenu(); });
+document.addEventListener("click", ev=>{ if(!menu.contains(ev.target)) fechaMenu(); });
 
 /* ---------- backup ---------- */
 $("#btnExport").onclick = ()=>{
