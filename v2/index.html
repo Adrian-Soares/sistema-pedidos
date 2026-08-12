@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pedidos de Publicações</title>
+<meta name="theme-color" content="#2f6f4e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icone-192.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f6f4e'/><path d='M26 28h20a8 8 0 018 8v40a8 8 0 00-8-8H26zM74 28H54a8 8 0 00-8 8v40a8 8 0 018-8h20z' fill='white'/></svg>">
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#fff; --ink:#1a2027; --muted:#68737d; --line:#e2e6ea;
+    --brand:#2f6f4e; --brand-ink:#fff; --brand-soft:#e8f2ed;
+    --amber:#9a6b00; --amber-bg:#fdf3d8;
+    --blue:#1f5f9e;  --blue-bg:#e3eefa;
+    --green:#2f6f4e; --green-bg:#e2f1e9;
+    --gray:#5a6570;  --gray-bg:#eceff2;
+    --danger:#b3261e;
+    --r:14px; --sh:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14181c; --card:#1c2126; --ink:#e8ecef; --muted:#9aa5b0; --line:#2b3238;
+      --brand:#57a37b; --brand-ink:#0d1114; --brand-soft:#23312a;
+      --amber:#e0b25a; --amber-bg:#3a3020;
+      --blue:#7fb2e0;  --blue-bg:#1e2c39;
+      --green:#71bf95; --green-bg:#1e3128;
+      --gray:#a3adb7;  --gray-bg:#282f35;
+      --danger:#f2857c;
+      --sh:0 1px 3px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:16px 16px 96px}
+
+  header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  header.top h1{font-size:20px;margin:0;flex:1;letter-spacing:-.2px}
+  header.top .sub{display:block;font-size:12.5px;font-weight:400;color:var(--muted);margin-top:2px}
+
+  button,select,input,textarea{font:inherit;color:inherit}
+  .btn{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:8px 14px;cursor:pointer;box-shadow:var(--sh);white-space:nowrap}
+  .btn:hover{border-color:var(--brand)}
+  .btn.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);font-weight:600}
+  .btn.ghost{background:transparent;box-shadow:none}
+  .btn.sm{padding:5px 10px;font-size:13px;border-radius:8px}
+  .btn.danger{color:var(--danger);border-color:var(--line)}
+  .btn.danger:hover{border-color:var(--danger)}
+
+  .tabs{display:flex;gap:4px;background:var(--card);padding:4px;border-radius:12px;
+        border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:14px;overflow:auto}
+  .tabs button{flex:1;min-width:104px;border:0;background:transparent;padding:9px 12px;
+        border-radius:9px;cursor:pointer;font-weight:500;color:var(--muted)}
+  .tabs button[aria-selected="true"]{background:var(--brand-soft);color:var(--brand);font-weight:650}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+        padding:10px 12px;box-shadow:var(--sh);cursor:pointer;text-align:left}
+  .stat.on{border-color:var(--brand);background:var(--brand-soft)}
+  .stat b{display:block;font-size:22px;line-height:1.1;letter-spacing:-.5px}
+  .stat span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+
+  .filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .filters input[type=search],.filters select{
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:9px 12px;box-shadow:var(--sh);min-width:0}
+  .filters input[type=search]{flex:1;min-width:180px}
+
+  /* Cartões de pedido */
+  .list{display:flex;flex-direction:column;gap:10px}
+  .group-h{font-size:12.5px;font-weight:700;color:var(--muted);text-transform:uppercase;
+           letter-spacing:.6px;margin:10px 2px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+        padding:12px 14px;box-shadow:var(--sh)}
+  .card-h{display:flex;align-items:flex-start;gap:10px}
+  .card-h .who{flex:1;min-width:0}
+  .who .name{font-weight:650;font-size:15.5px}
+  .who .meta{font-size:12.5px;color:var(--muted);margin-top:1px}
+
+  .item{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+  .item.done{opacity:.55}
+  .item .txt{flex:1;min-width:0}
+  .item .titulo{font-size:14.5px;line-height:1.3}
+  .item .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .item .acts{display:flex;gap:6px;align-items:center;flex-shrink:0}
+
+  .thumb{width:42px;height:56px;border-radius:6px;object-fit:cover;background:var(--bg);
+         border:1px solid var(--line);flex-shrink:0}
+  .thumb.ph{display:flex;align-items:center;justify-content:center;color:var(--muted);
+            font-size:17px;font-weight:700}
+  .qty{display:inline-block;background:var(--brand-soft);color:var(--brand);
+       font-weight:700;font-size:12.5px;padding:1px 7px;border-radius:6px;margin-right:6px}
+  .obs{margin-top:9px;padding-top:9px;border-top:1px solid var(--line);
+       font-size:13px;color:var(--muted);font-style:italic}
+  .card-f{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center}
+  .card-f .spacer{flex:1}
+
+  .tag{font-size:11.5px;font-weight:650;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .t-pendente{background:var(--amber-bg);color:var(--amber)}
+  .t-solicitado{background:var(--blue-bg);color:var(--blue)}
+  .t-chegou{background:var(--green-bg);color:var(--green)}
+  .t-entregue{background:var(--gray-bg);color:var(--gray)}
+
+  .empty{text-align:center;color:var(--muted);padding:44px 16px;background:var(--card);
+         border:1px dashed var(--line);border-radius:var(--r)}
+  .empty p{margin:6px 0}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+         box-shadow:var(--sh);padding:14px;margin-bottom:12px}
+  .panel h2{margin:0 0 4px;font-size:16px}
+  .panel .hint{margin:0 0 12px;font-size:13px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+  td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  tbody tr:last-child td{border-bottom:0}
+  .names{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .cellpub{display:flex;gap:10px;align-items:center}
+
+  /* Catálogo */
+  .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .catitem{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+           box-shadow:var(--sh);padding:10px;text-align:center;cursor:pointer}
+  .catitem:hover{border-color:var(--brand)}
+  .catitem img,.catitem .noimg{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;
+           background:var(--bg);border:1px solid var(--line);display:block}
+  .catitem .noimg{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;padding:6px}
+  .catitem .nome{font-size:13px;font-weight:600;margin-top:8px;line-height:1.25}
+  .catitem .cat{font-size:11px;color:var(--muted);margin-top:2px}
+  .catbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+  .catbar input,.catbar select{background:var(--card);border:1px solid var(--line);
+        border-radius:10px;padding:9px 12px;box-shadow:var(--sh)}
+  .catbar input{flex:1;min-width:170px}
+
+  /* Formulário / modal */
+  dialog{border:0;padding:0;background:transparent;max-width:600px;width:calc(100% - 24px)}
+  dialog::backdrop{background:rgba(10,14,18,.55)}
+  .sheet{background:var(--card);border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.28);
+         padding:18px;max-height:88vh;overflow:auto}
+  .sheet h2{margin:0 0 14px;font-size:17px}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:12.5px;font-weight:650;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{
+    width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--brand);outline-offset:-1px}
+  .field textarea{resize:vertical;min-height:58px}
+  .row{display:flex;gap:10px}
+  .row .field{flex:1}
+  .sheet-f{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;align-items:center}
+  .sheet-f .spacer{flex:1}
+  .sec{font-size:12.5px;font-weight:700;color:var(--muted);text-transform:uppercase;
+       letter-spacing:.5px;margin:16px 0 8px}
+
+  /* Linhas de publicação dentro do formulário */
+  .linha{display:flex;gap:9px;align-items:flex-start;background:var(--bg);
+         border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
+  .lthumb{width:44px;height:58px;border-radius:6px;object-fit:cover;flex-shrink:0;
+         border:1px solid var(--line);background:var(--card)}
+  .lthumb.ph{display:flex;align-items:center;justify-content:center;
+         color:var(--muted);font-size:10px;text-align:center;line-height:1.15;padding:3px}
+  .linha .lc{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+  .linha .lc input{width:100%;padding:8px 10px;border:1px solid var(--line);
+         border-radius:9px;background:var(--card)}
+  .linha .lrow{display:flex;gap:7px}
+  .linha .lrow input{flex:1;min-width:0}
+  .linha .lrow input.q{max-width:74px;flex:0 0 74px}
+  .linha .lx{border:0;background:transparent;color:var(--muted);cursor:pointer;
+         font-size:19px;line-height:1;padding:2px 4px}
+  .linha .lx:hover{color:var(--danger)}
+
+  .fab{position:fixed;right:18px;bottom:18px;z-index:5;border:0;border-radius:999px;
+       background:var(--brand);color:var(--brand-ink);font-weight:650;font-size:15px;
+       padding:14px 22px;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer}
+
+  .toast{position:fixed;left:50%;bottom:84px;transform:translate(-50%,20px);z-index:99;
+         background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;
+         font-size:14px;opacity:0;pointer-events:none;transition:.22s;max-width:88%;text-align:center}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+
+  #lightbox{position:fixed;inset:0;background:rgba(8,11,14,.86);z-index:50;
+        display:none;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+  #lightbox.on{display:flex}
+  #lightbox img{max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+
+  @media (max-width:640px){
+    .wrap{padding:12px 12px 92px}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    header.top h1{font-size:18px}
+    .row{flex-direction:column;gap:0}
+    table{font-size:13.5px}
+    th,td{padding:8px 5px}
+    .catgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+  }
+
+  @media print{
+    body{background:#fff}
+    .tabs,.filters,.stats,.fab,.btn,header.top .actions,.toast,.catbar,.item .acts{display:none !important}
+    .panel,.card{box-shadow:none;border-color:#ccc;break-inside:avoid}
+    .wrap{max-width:none;padding:0}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>Pedidos de Publicações<span class="sub" id="subtitle">—</span></h1>
+    <div class="actions">
+      <button class="btn sm" id="btnPrint">Imprimir</button>
+      <button class="btn sm" id="btnExport">Backup</button>
+      <button class="btn sm" id="btnImport">Restaurar</button>
+      <input type="file" id="fileImport" accept="application/json" hidden>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true"  data-view="pedidos">Pedidos</button>
+    <button role="tab" aria-selected="false" data-view="resumo">Resumo p/ pedir</button>
+    <button role="tab" aria-selected="false" data-view="irmaos">Por irmão</button>
+    <button role="tab" aria-selected="false" data-view="catalogo">Publicações</button>
+  </nav>
+
+  <!-- ============ PEDIDOS ============ -->
+  <section id="v-pedidos">
+    <div class="stats" id="stats"></div>
+    <div class="filters">
+      <input type="search" id="q" placeholder="Buscar por irmão, publicação, grupo…">
+      <select id="fOrder">
+        <option value="data">Mais recentes primeiro</option>
+        <option value="status">Agrupar por status</option>
+        <option value="nome">Agrupar por irmão</option>
+        <option value="pub">Agrupar por publicação</option>
+      </select>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <!-- ============ RESUMO ============ -->
+  <section id="v-resumo" hidden>
+    <div class="panel">
+      <h2>Total a solicitar</h2>
+      <p class="hint">Soma das quantidades dos pedidos <b>pendentes</b> e <b>solicitados</b>, agrupados por publicação e idioma.</p>
+      <table><thead><tr><th>Publicação</th><th>Idioma</th><th class="num">Qtd.</th></tr></thead>
+        <tbody id="tbResumo"></tbody></table>
+    </div>
+    <div class="panel">
+      <h2>Aguardando entrega</h2>
+      <p class="hint">Publicações que já chegaram e ainda precisam ser entregues.</p>
+      <table><thead><tr><th>Irmão</th><th>Publicação</th><th class="num">Qtd.</th></tr></thead>
+        <tbody id="tbEntregar"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ============ POR IRMÃO ============ -->
+  <section id="v-irmaos" hidden>
+    <div class="panel">
+      <h2>Histórico por irmão</h2>
+      <p class="hint">Toque numa linha para ver os pedidos da pessoa.</p>
+      <table><thead><tr><th>Irmão</th><th class="num">Itens</th><th class="num">Em aberto</th><th>Último pedido</th></tr></thead>
+        <tbody id="tbIrmaos"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ============ CATÁLOGO ============ -->
+  <section id="v-catalogo" hidden>
+    <div class="catbar">
+      <input type="search" id="qCat" placeholder="Buscar publicação…">
+      <select id="fCat"><option value="">Todas as categorias</option></select>
+      <button class="btn sm primary" id="btnNovaPub">+ Publicação</button>
+      <button class="btn sm ghost" id="btnRestaurarCat">Restaurar lista padrão</button>
+    </div>
+    <p class="hint" style="color:var(--muted);font-size:13px;margin:0 0 12px">
+      Toque numa publicação para editar o nome, a categoria ou adicionar a foto da capa.
+      A lista já vem preenchida — ajuste à vontade, é só um ponto de partida.
+    </p>
+    <div class="catgrid" id="catgrid"></div>
+  </section>
+
+</div>
+
+<button class="fab" id="fabNew">+ Novo pedido</button>
+<div class="toast" id="toast"></div>
+<div id="lightbox"><img id="lightboxImg" alt=""></div>
+
+<datalist id="dlNomes"></datalist>
+<datalist id="dlPubs"></datalist>
+<datalist id="dlGrupos"></datalist>
+<datalist id="dlCats"></datalist>
+<datalist id="dlIdiomas">
+  <option value="Português"><option value="Espanhol"><option value="Inglês">
+  <option value="Libras"><option value="Italiano"><option value="Alemão"><option value="Francês">
+</datalist>
+
+<!-- ============ MODAL PEDIDO ============ -->
+<dialog id="dlg">
+  <form method="dialog" class="sheet" id="form">
+    <h2 id="dlgTitle">Novo pedido</h2>
+
+    <div class="field">
+      <label for="fNome">Irmão / irmã *</label>
+      <input id="fNome" list="dlNomes" required autocomplete="off" placeholder="Nome completo">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="fGrupo">Grupo de campo</label>
+        <input id="fGrupo" list="dlGrupos" autocomplete="off" placeholder="Ex.: Grupo 3">
+      </div>
+      <div class="field">
+        <label for="fData">Data do pedido</label>
+        <input id="fData" type="date">
+      </div>
+    </div>
+
+    <div class="sec">Publicações</div>
+    <div id="itens"></div>
+    <button type="button" class="btn sm" id="btnAddItem">+ Adicionar outra publicação</button>
+
+    <div class="sec">Situação</div>
+    <div class="row">
+      <div class="field">
+        <label for="fStatus">Status</label>
+        <select id="fStatus">
+          <option value="pendente">Pendente</option>
+          <option value="solicitado">Solicitado</option>
+          <option value="chegou">Chegou</option>
+          <option value="entregue">Entregue</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fEntrega">Data de entrega</label>
+        <input id="fEntrega" type="date">
+      </div>
+    </div>
+    <div class="field">
+      <label for="fObs">Observações</label>
+      <textarea id="fObs" placeholder="Anotações sobre o pedido…"></textarea>
+    </div>
+
+    <div class="sheet-f">
+      <button type="button" class="btn danger" id="btnDel" hidden>Excluir</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" id="btnCancel">Cancelar</button>
+      <button type="submit" class="btn primary">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ MODAL PUBLICAÇÃO ============ -->
+<dialog id="dlgPub">
+  <form method="dialog" class="sheet" id="formPub">
+    <h2 id="dlgPubTitle">Publicação</h2>
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <div style="text-align:center;flex-shrink:0;width:100px">
+        <img id="pImg" alt="" style="width:100px;height:133px;object-fit:cover;
+             border:1px solid var(--line);border-radius:8px;background:var(--bg);display:none">
+        <div id="pImgVazio" style="width:100px;height:133px;border:1px dashed var(--line);
+             border-radius:8px;display:flex;align-items:center;justify-content:center;
+             color:var(--muted);font-size:12px">sem foto</div>
+        <button type="button" class="btn sm ghost" id="pImgBtn" style="margin-top:6px;width:100%">Escolher foto</button>
+        <button type="button" class="btn sm ghost" id="pImgDel" style="margin-top:4px;width:100%" hidden>Remover foto</button>
+        <input type="file" id="pImgFile" accept="image/*" hidden>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="field">
+          <label for="pNome">Nome da publicação *</label>
+          <input id="pNome" required autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="pCat">Categoria</label>
+          <input id="pCat" list="dlCats" autocomplete="off" placeholder="Ex.: Livros">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="pCod">Código / sigla (opcional)</label>
+          <input id="pCod" autocomplete="off" placeholder="Ex.: bt, lff, nwt">
+        </div>
+      </div>
+    </div>
+    <div class="sheet-f">
+      <button type="button" class="btn danger" id="pDel" hidden>Excluir</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" id="pCancel">Cancelar</button>
+      <button type="submit" class="btn primary">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+"use strict";
+
+const KEY_P = "pedidos-publicacoes-v1";
+const KEY_C = "pedidos-catalogo-v1";
+
+const STATUS = {
+  pendente:   {label:"Pendente",   next:"solicitado", nextLabel:"Solicitado"},
+  solicitado: {label:"Solicitado", next:"chegou",     nextLabel:"Chegou"},
+  chegou:     {label:"Chegou",     next:"entregue",   nextLabel:"Entregue"},
+  entregue:   {label:"Entregue",   next:null,         nextLabel:null}
+};
+const ORDER = ["pendente","solicitado","chegou","entregue"];
+
+/* Lista inicial de publicações — só um ponto de partida, editável na aba Publicações. */
+const CATALOGO_PADRAO = [
+  ["Bíblia — Tradução do Novo Mundo","Bíblias","nwt"],
+  ["Bíblia de Estudo","Bíblias","nwtsty"],
+  ["Bíblia — letra grande","Bíblias","nwtls"],
+  ["Aproxime-se de Jeová","Livros","cl"],
+  ["Adoração Pura a Jeová","Livros","rr"],
+  ["Permaneçam no Amor de Deus","Livros","lvs"],
+  ["Organizados para Fazer a Vontade de Jeová","Livros","od"],
+  ["Meu Livro de Histórias Bíblicas","Livros","my"],
+  ["Aprenda com as Histórias da Bíblia","Livros","mb"],
+  ["Cante de Coração","Livros","sjj"],
+  ["Seja Feliz Para Sempre!","Brochuras","lff"],
+  ["Boas Notícias de Deus!","Brochuras","fg"],
+  ["Ouça a Deus e Viva Para Sempre","Brochuras","ll"],
+  ["Quem Está Fazendo a Vontade de Jeová Hoje?","Brochuras","jl"],
+  ["Volte para Jeová","Brochuras","rk"],
+  ["A Sentinela — Edição de Estudo","Revistas","ws"],
+  ["A Sentinela — Edição Pública","Revistas","wp"],
+  ["Despertai!","Revistas","g"],
+  ["Apostila Vida e Ministério","Apostilas","mwb"],
+  ["Convite para a Celebração","Folhetos","inv"],
+  ["Convite para o Congresso","Folhetos","inv-c"],
+  ["Cartão de contato","Folhetos","jwcd"]
+];
+
+/* ---------- estado ---------- */
+let pedidos  = carregaPedidos();
+let catalogo = carregaCatalogo();
+let filtroStatus = "";
+let editIds  = null;    // ids dos itens em edição (null = pedido novo)
+let editPubNome = null; // nome da publicação em edição no catálogo
+
+function carregaPedidos(){
+  try{
+    const arr = JSON.parse(localStorage.getItem(KEY_P) || "[]");
+    if(!Array.isArray(arr)) return [];
+    return arr.map(p => Object.assign({qtd:1, idioma:"Português", status:"pendente"},
+                                      p, {lote: p.lote || "l" + p.id}));
+  }catch(e){ return []; }
+}
+function carregaCatalogo(){
+  try{
+    const raw = localStorage.getItem(KEY_C);
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr)) return arr;
+    }
+  }catch(e){}
+  return catalogoPadrao();
+}
+function catalogoPadrao(){
+  return CATALOGO_PADRAO.map(([nome,cat,cod]) => ({nome, cat, cod, img:""}));
+}
+function salvar(){
+  try{
+    localStorage.setItem(KEY_P, JSON.stringify(pedidos));
+    localStorage.setItem(KEY_C, JSON.stringify(catalogo));
+  }catch(e){
+    alert("Não foi possível salvar: o armazenamento do navegador ficou cheio.\n\n" +
+          "Isso costuma acontecer quando há muitas fotos de capa. " +
+          "Remova algumas imagens na aba Publicações.");
+  }
+}
+
+/* ---------- utilidades ---------- */
+const $  = s => document.querySelector(s);
+const el = (t,c,txt) => { const n=document.createElement(t); if(c)n.className=c; if(txt!=null)n.textContent=txt; return n; };
+const hoje = () => new Date().toISOString().slice(0,10);
+const norm = s => (s||"").trim().toLowerCase().normalize("NFD").replace(new RegExp("[\\u0300-\\u036f]","g"),"");
+const cap  = s => (s||"").trim().replace(/\s+/g," ");
+const uid  = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+function fmtData(d){ if(!d) return ""; const [y,m,dd]=d.split("-"); return `${dd}/${m}/${y}`; }
+function acha(nome){ const k = norm(nome); return catalogo.find(c => norm(c.nome) === k) || null; }
+function imgDe(nome){ const c = acha(nome); return c && c.img ? c.img : ""; }
+
+let toastT;
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("on"), 2300);
+}
+
+/* Miniatura da capa: imagem se houver, senão a inicial do título. */
+function miniatura(nome, cls){
+  const base = cls || "thumb";
+  const src = imgDe(nome);
+  if(src){
+    const i = el("img", base);
+    i.src = src; i.alt = nome; i.loading = "lazy"; i.style.cursor = "zoom-in";
+    i.onclick = ev => { ev.stopPropagation(); abrirLightbox(src); };
+    return i;
+  }
+  const vazio = base === "thumb" ? (nome||"?").trim().charAt(0).toUpperCase() || "?" : "sem foto";
+  return el("div", base + " ph", vazio);
+}
+function abrirLightbox(src){
+  $("#lightboxImg").src = src;
+  $("#lightbox").classList.add("on");
+}
+$("#lightbox").onclick = ()=> $("#lightbox").classList.remove("on");
+
+/* Reduz a imagem antes de guardar — o navegador tem pouco espaço. */
+function comprime(file, max, cb){
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{
+      let w = img.width, h = img.height;
+      const esc = Math.min(1, max / Math.max(w,h));
+      w = Math.round(w*esc); h = Math.round(h*esc);
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      cv.getContext("2d").drawImage(img, 0, 0, w, h);
+      cb(cv.toDataURL("image/jpeg", 0.72));
+    };
+    img.onerror = ()=> toast("Não foi possível ler essa imagem");
+    img.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+
+/* ---------- render ---------- */
+function render(){
+  renderStats(); renderLista(); renderResumo();
+  renderIrmaos(); renderCatalogo(); renderDatalists();
+  const abertos = pedidos.filter(p=>p.status!=="entregue").length;
+  $("#subtitle").textContent = pedidos.length
+    ? `${pedidos.length} ${pedidos.length>1?"itens":"item"} · ${abertos} em aberto`
+    : "Nenhum pedido registrado ainda";
+}
+
+function renderStats(){
+  const box = $("#stats"); box.innerHTML = "";
+  ORDER.forEach(st=>{
+    const n = pedidos.filter(p=>p.status===st).length;
+    const b = el("button","stat" + (filtroStatus===st ? " on" : ""));
+    b.appendChild(el("b",null,String(n)));
+    b.appendChild(el("span",null,STATUS[st].label));
+    b.onclick = ()=>{ filtroStatus = (filtroStatus===st ? "" : st); renderStats(); renderLista(); };
+    box.appendChild(b);
+  });
+}
+
+function filtrados(){
+  const q = norm($("#q").value);
+  return pedidos.filter(p=>{
+    if(filtroStatus && p.status !== filtroStatus) return false;
+    if(!q) return true;
+    return [p.nome,p.pub,p.grupo,p.idioma,p.obs].some(v => norm(v).includes(q));
+  });
+}
+
+function renderLista(){
+  const box = $("#list"); box.innerHTML = "";
+  const modo = $("#fOrder").value;
+  const itens = filtrados();
+
+  if(!itens.length){
+    const e = el("div","empty");
+    e.appendChild(el("p",null, pedidos.length ? "Nenhum pedido encontrado com esses filtros."
+                                              : "Nenhum pedido registrado ainda."));
+    if(!pedidos.length) e.appendChild(el("p",null,"Toque em “+ Novo pedido” para começar."));
+    box.appendChild(e); return;
+  }
+
+  let grupos;
+  if(modo === "data"){
+    grupos = [["", itens.slice()]];
+  } else {
+    const chave = modo==="status" ? p=>STATUS[p.status].label
+                : modo==="nome"   ? p=>p.nome
+                :                   p=>p.pub;
+    const map = new Map();
+    itens.forEach(p=>{ const k=chave(p); if(!map.has(k)) map.set(k,[]); map.get(k).push(p); });
+    grupos = [...map.entries()];
+    if(modo==="status")
+      grupos.sort((a,b)=> ORDER.findIndex(s=>STATUS[s].label===a[0]) - ORDER.findIndex(s=>STATUS[s].label===b[0]));
+    else
+      grupos.sort((a,b)=> a[0].localeCompare(b[0],"pt-BR"));
+  }
+
+  grupos.forEach(([titulo, arr])=>{
+    // dentro de cada grupo, os itens do mesmo pedido viram um cartão só
+    const lotes = new Map();
+    arr.forEach(p=>{ if(!lotes.has(p.lote)) lotes.set(p.lote,[]); lotes.get(p.lote).push(p); });
+    const cartoes = [...lotes.values()];
+    cartoes.sort((a,b)=> (b[0].dataPedido||"").localeCompare(a[0].dataPedido||"")
+                      || String(b[0].lote).localeCompare(String(a[0].lote)));
+    if(titulo) box.appendChild(el("div","group-h", `${titulo} (${arr.length})`));
+    cartoes.forEach(itensDoLote => box.appendChild(cardPedido(itensDoLote)));
+  });
+}
+
+function cardPedido(itens){
+  const p0 = itens[0];
+  const c = el("div","card");
+
+  const h = el("div","card-h");
+  const who = el("div","who");
+  who.appendChild(el("div","name", p0.nome));
+  const meta = [];
+  if(p0.grupo) meta.push(p0.grupo);
+  if(p0.dataPedido) meta.push("pedido em " + fmtData(p0.dataPedido));
+  if(meta.length) who.appendChild(el("div","meta", meta.join(" · ")));
+  h.appendChild(who);
+  const btnEd = el("button","btn sm ghost","Editar");
+  btnEd.onclick = ()=> abrirForm(itens);
+  h.appendChild(btnEd);
+  c.appendChild(h);
+
+  itens.forEach(p=>{
+    const it = el("div","item" + (p.status==="entregue" ? " done" : ""));
+    it.appendChild(miniatura(p.pub));
+
+    const txt = el("div","txt");
+    const tit = el("div","titulo");
+    if(p.qtd > 1) tit.appendChild(el("span","qty", p.qtd + "×"));
+    tit.appendChild(document.createTextNode(p.pub));
+    txt.appendChild(tit);
+    const sub = [];
+    if(p.idioma && p.idioma !== "Português") sub.push(p.idioma);
+    if(p.status === "entregue" && p.dataEntrega) sub.push("entregue em " + fmtData(p.dataEntrega));
+    if(sub.length) txt.appendChild(el("div","sub", sub.join(" · ")));
+    it.appendChild(txt);
+
+    const acts = el("div","acts");
+    acts.appendChild(el("span","tag t-"+p.status, STATUS[p.status].label));
+    const prox = STATUS[p.status].next;
+    if(prox){
+      const b = el("button","btn sm primary","→ " + STATUS[p.status].nextLabel);
+      b.title = "Marcar como " + STATUS[prox].label.toLowerCase();
+      b.onclick = ()=>{
+        p.status = prox;
+        if(prox === "entregue" && !p.dataEntrega) p.dataEntrega = hoje();
+        salvar(); render(); toast(`${p.pub}: ${STATUS[prox].label.toLowerCase()}`);
+      };
+      acts.appendChild(b);
+    }
+    it.appendChild(acts);
+    c.appendChild(it);
+  });
+
+  if(p0.obs) c.appendChild(el("div","obs", p0.obs));
+
+  const avancaveis = itens.filter(p => STATUS[p.status].next);
+  if(itens.length > 1 && avancaveis.length > 1){
+    const f = el("div","card-f");
+    f.appendChild(el("span","spacer"));
+    const b = el("button","btn sm","Avançar todos");
+    b.onclick = ()=>{
+      avancaveis.forEach(p=>{
+        p.status = STATUS[p.status].next;
+        if(p.status === "entregue" && !p.dataEntrega) p.dataEntrega = hoje();
+      });
+      salvar(); render(); toast("Pedido de " + p0.nome + " atualizado");
+    };
+    f.appendChild(b);
+    c.appendChild(f);
+  }
+  return c;
+}
+
+function renderResumo(){
+  const tb = $("#tbResumo"); tb.innerHTML = "";
+  const map = new Map();
+  pedidos.filter(p => p.status==="pendente" || p.status==="solicitado").forEach(p=>{
+    const k = norm(p.pub) + "|" + norm(p.idioma || "Português");
+    if(!map.has(k)) map.set(k, {pub:p.pub, idioma:p.idioma||"Português", qtd:0, nomes:[]});
+    const o = map.get(k);
+    o.qtd += (p.qtd||1);
+    o.nomes.push(p.nome + (p.qtd>1 ? ` (${p.qtd})` : ""));
+  });
+  const linhas = [...map.values()].sort((a,b)=> b.qtd-a.qtd || a.pub.localeCompare(b.pub,"pt-BR"));
+  if(!linhas.length){
+    tb.appendChild(linhaVazia(3,"Nada pendente no momento."));
+  } else {
+    linhas.forEach(o=>{
+      const tr = el("tr");
+      const td = el("td");
+      const cell = el("div","cellpub");
+      cell.appendChild(miniatura(o.pub));
+      const info = el("div");
+      info.appendChild(el("div",null,o.pub));
+      info.appendChild(el("div","names", o.nomes.join(", ")));
+      cell.appendChild(info);
+      td.appendChild(cell); tr.appendChild(td);
+      tr.appendChild(el("td",null,o.idioma));
+      tr.appendChild(el("td","num",String(o.qtd)));
+      tb.appendChild(tr);
+    });
+    const tot = linhas.reduce((s,o)=>s+o.qtd,0);
+    const tr = el("tr");
+    const td = el("td",null,"Total"); td.style.fontWeight="700";
+    const tdn = el("td","num",String(tot)); tdn.style.fontWeight="700";
+    tr.appendChild(td); tr.appendChild(el("td")); tr.appendChild(tdn);
+    tb.appendChild(tr);
+  }
+
+  const tb2 = $("#tbEntregar"); tb2.innerHTML = "";
+  const chegou = pedidos.filter(p=>p.status==="chegou")
+                        .sort((a,b)=> a.nome.localeCompare(b.nome,"pt-BR"));
+  if(!chegou.length){
+    tb2.appendChild(linhaVazia(3,"Nenhuma publicação aguardando entrega."));
+  } else {
+    chegou.forEach(p=>{
+      const tr = el("tr");
+      tr.appendChild(el("td",null, p.nome + (p.grupo ? ` — ${p.grupo}` : "")));
+      const td = el("td");
+      const cell = el("div","cellpub");
+      cell.appendChild(miniatura(p.pub));
+      cell.appendChild(el("div",null, p.pub + (p.idioma && p.idioma!=="Português" ? ` (${p.idioma})` : "")));
+      td.appendChild(cell); tr.appendChild(td);
+      tr.appendChild(el("td","num",String(p.qtd||1)));
+      tb2.appendChild(tr);
+    });
+  }
+}
+
+function renderIrmaos(){
+  const tb = $("#tbIrmaos"); tb.innerHTML = "";
+  const map = new Map();
+  pedidos.forEach(p=>{
+    const k = norm(p.nome);
+    if(!map.has(k)) map.set(k,{nome:p.nome, grupo:p.grupo, total:0, abertos:0, ultimo:""});
+    const o = map.get(k);
+    o.total++;
+    if(p.status!=="entregue") o.abertos++;
+    if((p.dataPedido||"") > o.ultimo) o.ultimo = p.dataPedido||"";
+    if(p.grupo) o.grupo = p.grupo;
+  });
+  const linhas = [...map.values()].sort((a,b)=> b.abertos-a.abertos || a.nome.localeCompare(b.nome,"pt-BR"));
+  if(!linhas.length){ tb.appendChild(linhaVazia(4,"Nenhum irmão cadastrado ainda.")); return; }
+  linhas.forEach(o=>{
+    const tr = el("tr");
+    const td = el("td");
+    td.appendChild(el("div",null,o.nome));
+    if(o.grupo) td.appendChild(el("div","names",o.grupo));
+    tr.appendChild(td);
+    tr.appendChild(el("td","num",String(o.total)));
+    tr.appendChild(el("td","num",String(o.abertos)));
+    tr.appendChild(el("td",null,fmtData(o.ultimo)));
+    tr.style.cursor = "pointer";
+    tr.onclick = ()=>{ $("#q").value = o.nome; filtroStatus=""; irPara("pedidos"); renderStats(); renderLista(); };
+    tb.appendChild(tr);
+  });
+}
+
+function linhaVazia(cols, txt){
+  const tr = el("tr"), td = el("td",null,txt);
+  td.colSpan = cols; td.style.color = "var(--muted)"; td.style.padding = "16px 8px";
+  tr.appendChild(td); return tr;
+}
+
+function renderCatalogo(){
+  const cats = [...new Set(catalogo.map(c=>c.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  const sel = $("#fCat"), atual = sel.value;
+  sel.innerHTML = '<option value="">Todas as categorias</option>';
+  cats.forEach(c=>{ const o=el("option",null,c); o.value=c; sel.appendChild(o); });
+  sel.value = cats.includes(atual) ? atual : "";
+  const dl = $("#dlCats"); dl.innerHTML = "";
+  cats.forEach(c=>{ const o=el("option"); o.value=c; dl.appendChild(o); });
+
+  const q = norm($("#qCat").value), fc = sel.value;
+  const box = $("#catgrid"); box.innerHTML = "";
+  const lista = catalogo
+    .filter(c => (!fc || c.cat===fc) && (!q || norm(c.nome).includes(q) || norm(c.cod).includes(q)))
+    .sort((a,b)=> (a.cat||"").localeCompare(b.cat||"","pt-BR") || a.nome.localeCompare(b.nome,"pt-BR"));
+
+  if(!lista.length){
+    const e = el("div","empty"); e.style.gridColumn = "1/-1";
+    e.appendChild(el("p",null,"Nenhuma publicação encontrada."));
+    box.appendChild(e); return;
+  }
+  lista.forEach(c=>{
+    const d = el("div","catitem");
+    if(c.img){ const i = el("img"); i.src = c.img; i.alt = c.nome; i.loading="lazy"; d.appendChild(i); }
+    else d.appendChild(el("div","noimg","sem foto"));
+    d.appendChild(el("div","nome",c.nome));
+    d.appendChild(el("div","cat",[c.cat, c.cod].filter(Boolean).join(" · ")));
+    d.onclick = ()=> abrirFormPub(c);
+    box.appendChild(d);
+  });
+}
+
+function renderDatalists(){
+  const enche = (sel, vals) => {
+    const dl = $(sel); dl.innerHTML = "";
+    [...new Set(vals.filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"))
+      .forEach(v=>{ const o=el("option"); o.value=v; dl.appendChild(o); });
+  };
+  enche("#dlNomes",  pedidos.map(p=>p.nome));
+  enche("#dlGrupos", pedidos.map(p=>p.grupo));
+  enche("#dlPubs",   catalogo.map(c=>c.nome).concat(pedidos.map(p=>p.pub)));
+}
+
+/* ---------- formulário de pedido ---------- */
+function linhaItem(item){
+  const wrap = el("div","linha");
+  wrap.appendChild(miniatura(item ? item.pub : "", "lthumb"));
+
+  const lc = el("div","lc");
+  const inPub = el("input");
+  inPub.placeholder = "Publicação *";
+  inPub.setAttribute("list","dlPubs");
+  inPub.autocomplete = "off";
+  inPub.value = item ? item.pub : "";
+  lc.appendChild(inPub);
+
+  const lrow = el("div","lrow");
+  const inQtd = el("input");
+  inQtd.type="number"; inQtd.min="1"; inQtd.step="1"; inQtd.className="q";
+  inQtd.inputMode="numeric"; inQtd.title="Quantidade";
+  inQtd.value = item ? (item.qtd||1) : 1;
+  const inIdi = el("input");
+  inIdi.setAttribute("list","dlIdiomas"); inIdi.autocomplete="off"; inIdi.placeholder="Idioma";
+  inIdi.value = item ? (item.idioma||"Português") : "Português";
+  lrow.appendChild(inQtd); lrow.appendChild(inIdi);
+  lc.appendChild(lrow);
+  wrap.appendChild(lc);
+
+  const x = el("button","lx","×");
+  x.type = "button"; x.title = "Remover esta publicação";
+  x.onclick = ()=>{
+    if($("#itens").children.length <= 1){ toast("O pedido precisa de ao menos uma publicação"); return; }
+    wrap.remove();
+  };
+  wrap.appendChild(x);
+
+  // a miniatura acompanha o título digitado
+  inPub.addEventListener("change", ()=>{
+    wrap.replaceChild(miniatura(inPub.value, "lthumb"), wrap.firstChild);
+  });
+
+  wrap.ler = ()=>({
+    pub:    cap(inPub.value),
+    qtd:    Math.max(1, parseInt(inQtd.value,10) || 1),
+    idioma: cap(inIdi.value) || "Português"
+  });
+  return wrap;
+}
+
+function abrirForm(itens){
+  const p0 = itens ? itens[0] : null;
+  editIds = itens ? itens.map(p=>p.id) : null;
+  $("#dlgTitle").textContent = p0 ? "Editar pedido" : "Novo pedido";
+  $("#btnDel").hidden  = !p0;
+  $("#fNome").value    = p0 ? p0.nome : "";
+  $("#fGrupo").value   = p0 ? (p0.grupo||"") : "";
+  $("#fData").value    = p0 ? (p0.dataPedido||"") : hoje();
+  $("#fStatus").value  = p0 ? p0.status : "pendente";
+  $("#fEntrega").value = p0 ? (p0.dataEntrega||"") : "";
+  $("#fObs").value     = p0 ? (p0.obs||"") : "";
+
+  const box = $("#itens"); box.innerHTML = "";
+  if(itens) itens.forEach(p => box.appendChild(linhaItem(p)));
+  else box.appendChild(linhaItem(null));
+
+  $("#dlg").showModal();
+  setTimeout(()=>$("#fNome").focus(), 50);
+}
+
+$("#btnAddItem").onclick = ()=>{
+  const l = linhaItem(null);
+  $("#itens").appendChild(l);
+  l.querySelector("input").focus();
+};
+
+$("#form").addEventListener("submit", ev=>{
+  ev.preventDefault();
+  const nome = cap($("#fNome").value);
+  const linhas = [...$("#itens").children].map(l => l.ler()).filter(l => l.pub);
+  if(!nome){ toast("Preencha o nome"); return; }
+  if(!linhas.length){ toast("Informe ao menos uma publicação"); return; }
+
+  const status  = $("#fStatus").value;
+  let   entrega = $("#fEntrega").value;
+  if(status === "entregue" && !entrega) entrega = hoje();
+
+  const base = {
+    nome,
+    grupo:       cap($("#fGrupo").value),
+    status,
+    dataPedido:  $("#fData").value || hoje(),
+    dataEntrega: entrega,
+    obs:         $("#fObs").value.trim()
+  };
+
+  if(editIds){
+    // preserva o status individual de cada item que já existia
+    const antigos = pedidos.filter(p => editIds.includes(p.id));
+    const lote = antigos[0].lote;
+    pedidos = pedidos.filter(p => !editIds.includes(p.id));
+    linhas.forEach((l,i)=>{
+      const ant = antigos[i];
+      const item = Object.assign({id: ant ? ant.id : uid(), lote}, base, l);
+      if(ant && ant.status !== antigos[0].status){   // status foi alterado só neste item
+        item.status = ant.status;
+        item.dataEntrega = ant.dataEntrega || base.dataEntrega;
+      }
+      pedidos.push(item);
+    });
+    toast("Pedido atualizado");
+  } else {
+    const lote = uid();
+    linhas.forEach(l => pedidos.push(Object.assign({id:uid(), lote}, base, l)));
+    toast(linhas.length > 1 ? `${linhas.length} publicações registradas` : "Pedido registrado");
+  }
+
+  // títulos novos entram no catálogo automaticamente
+  linhas.forEach(l=>{ if(!acha(l.pub)) catalogo.push({nome:l.pub, cat:"", cod:"", img:""}); });
+
+  salvar(); render(); $("#dlg").close();
+});
+
+$("#btnCancel").onclick = ()=> $("#dlg").close();
+$("#btnDel").onclick = ()=>{
+  const alvo = pedidos.filter(p => editIds.includes(p.id));
+  if(!alvo.length) return;
+  const msg = alvo.length > 1
+    ? `Excluir as ${alvo.length} publicações deste pedido de ${alvo[0].nome}?`
+    : `Excluir o pedido de "${alvo[0].pub}" de ${alvo[0].nome}?`;
+  if(!confirm(msg)) return;
+  pedidos = pedidos.filter(p => !editIds.includes(p.id));
+  salvar(); render(); $("#dlg").close(); toast("Pedido excluído");
+};
+
+/* ---------- formulário de publicação ---------- */
+let pImgTmp = "";
+function abrirFormPub(c){
+  editPubNome = c ? c.nome : null;
+  $("#dlgPubTitle").textContent = c ? "Editar publicação" : "Nova publicação";
+  $("#pNome").value = c ? c.nome : "";
+  $("#pCat").value  = c ? (c.cat||"") : "";
+  $("#pCod").value  = c ? (c.cod||"") : "";
+  pImgTmp = c ? (c.img||"") : "";
+  atualizaImgPreview();
+  $("#pDel").hidden = !c;
+  $("#dlgPub").showModal();
+  setTimeout(()=>$("#pNome").focus(), 50);
+}
+function atualizaImgPreview(){
+  const img = $("#pImg");
+  if(pImgTmp){
+    img.src = pImgTmp;
+    img.style.display = "block";
+    $("#pImgVazio").style.display = "none";
+    $("#pImgDel").hidden = false;
+  } else {
+    img.removeAttribute("src");
+    img.style.display = "none";
+    $("#pImgVazio").style.display = "flex";
+    $("#pImgDel").hidden = true;
+  }
+}
+$("#pImgBtn").onclick = ()=> $("#pImgFile").click();
+$("#pImgFile").onchange = ev=>{
+  const f = ev.target.files[0];
+  if(f) comprime(f, 400, d=>{ pImgTmp = d; atualizaImgPreview(); });
+  ev.target.value = "";
+};
+$("#pImgDel").onclick = ()=>{ pImgTmp = ""; atualizaImgPreview(); };
+$("#pCancel").onclick = ()=> $("#dlgPub").close();
+
+$("#formPub").addEventListener("submit", ev=>{
+  ev.preventDefault();
+  const nome = cap($("#pNome").value);
+  if(!nome){ toast("Informe o nome da publicação"); return; }
+  if(catalogo.some(c => norm(c.nome)===norm(nome) && c.nome !== editPubNome)){
+    toast("Já existe uma publicação com esse nome"); return;
+  }
+
+  if(editPubNome){
+    const c = acha(editPubNome);
+    if(c){
+      if(c.nome !== nome)   // renomeia também nos pedidos já registrados
+        pedidos.forEach(p=>{ if(norm(p.pub)===norm(editPubNome)) p.pub = nome; });
+      c.nome = nome; c.cat = cap($("#pCat").value); c.cod = cap($("#pCod").value); c.img = pImgTmp;
+    }
+    toast("Publicação atualizada");
+  } else {
+    catalogo.push({nome, cat:cap($("#pCat").value), cod:cap($("#pCod").value), img:pImgTmp});
+    toast("Publicação adicionada");
+  }
+  salvar(); render(); $("#dlgPub").close();
+});
+
+$("#pDel").onclick = ()=>{
+  const usos = pedidos.filter(p => norm(p.pub)===norm(editPubNome)).length;
+  const msg = usos
+    ? `"${editPubNome}" aparece em ${usos} pedido(s). Removê-la do catálogo não apaga esses pedidos. Continuar?`
+    : `Excluir "${editPubNome}" do catálogo?`;
+  if(!confirm(msg)) return;
+  catalogo = catalogo.filter(c => norm(c.nome) !== norm(editPubNome));
+  salvar(); render(); $("#dlgPub").close(); toast("Publicação removida");
+};
+
+$("#btnNovaPub").onclick = ()=> abrirFormPub(null);
+$("#btnRestaurarCat").onclick = ()=>{
+  if(!confirm("Isso traz de volta os títulos da lista padrão que estiverem faltando.\n" +
+              "Suas publicações e fotos não serão apagadas. Continuar?")) return;
+  let n = 0;
+  catalogoPadrao().forEach(c=>{ if(!acha(c.nome)){ catalogo.push(c); n++; } });
+  salvar(); render();
+  toast(n ? `${n} publicação(ões) adicionada(s)` : "A lista padrão já está completa");
+};
+$("#qCat").addEventListener("input", renderCatalogo);
+$("#fCat").addEventListener("change", renderCatalogo);
+
+/* ---------- navegação ---------- */
+const VIEWS = ["pedidos","resumo","irmaos","catalogo"];
+function irPara(view){
+  document.querySelectorAll('.tabs button').forEach(b=>
+    b.setAttribute("aria-selected", String(b.dataset.view === view)));
+  VIEWS.forEach(v => $("#v-"+v).hidden = (v !== view));
+  const fab = $("#fabNew");
+  fab.hidden = (view === "resumo" || view === "irmaos");
+  fab.textContent = view === "catalogo" ? "+ Publicação" : "+ Novo pedido";
+  fab.dataset.acao = view === "catalogo" ? "pub" : "pedido";
+}
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = ()=> irPara(b.dataset.view));
+$("#fabNew").onclick = ()=> $("#fabNew").dataset.acao === "pub" ? abrirFormPub(null) : abrirForm(null);
+$("#q").addEventListener("input", renderLista);
+$("#fOrder").addEventListener("change", renderLista);
+$("#btnPrint").onclick = ()=> window.print();
+
+/* ---------- backup ---------- */
+$("#btnExport").onclick = ()=>{
+  const blob = new Blob([JSON.stringify({versao:2, pedidos, catalogo}, null, 2)], {type:"application/json"});
+  const a = el("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `pedidos-publicacoes-${hoje()}.json`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  toast("Backup salvo na pasta de downloads");
+};
+$("#btnImport").onclick = ()=> $("#fileImport").click();
+$("#fileImport").onchange = ev=>{
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const j = JSON.parse(r.result);
+      const novosPedidos = Array.isArray(j) ? j : j.pedidos;
+      const novoCatalogo = Array.isArray(j) ? null : j.catalogo;
+      if(!Array.isArray(novosPedidos)) throw 0;
+      if(pedidos.length && !confirm(
+        `Isso substitui os ${pedidos.length} itens atuais por ${novosPedidos.length} do arquivo. Continuar?`)) return;
+      pedidos = novosPedidos.map(p => Object.assign(
+        {id:uid(), qtd:1, idioma:"Português", status:"pendente"}, p, {lote: p.lote || "l" + p.id}));
+      if(Array.isArray(novoCatalogo) && novoCatalogo.length) catalogo = novoCatalogo;
+      salvar(); render(); toast("Backup restaurado");
+    }catch(e){ toast("Arquivo inválido"); }
+    finally{ ev.target.value = ""; }
+  };
+  r.readAsText(f);
+};
+
+/* ---------- atalhos ---------- */
+document.addEventListener("keydown", e=>{
+  if(e.key === "Escape" && $("#lightbox").classList.contains("on")){
+    $("#lightbox").classList.remove("on"); return;
+  }
+  if(e.key === "n" && !e.ctrlKey && !e.metaKey && !e.altKey &&
+     !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) &&
+     !$("#dlg").open && !$("#dlgPub").open){
+    e.preventDefault();
+    if($("#fabNew").hidden) irPara("pedidos");
+    $("#fabNew").click();
+  }
+});
+
+irPara("pedidos");
+render();
+
+/* Funcionar sem internet — só vale quando servido por http(s).
+   Aberto direto como arquivo, falha silenciosamente e não faz diferença. */
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+})();
+</script>
+</body>
+</html>
