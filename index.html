@@ -185,6 +185,9 @@
   tbody tr:last-child td{border-bottom:0}
   .names{font-size:12.5px;color:var(--muted);margin-top:2px}
   .cellpub{display:flex;gap:10px;align-items:center}
+  .pedi-tudo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+             margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+  .pedi-tudo .hint{margin:0;flex:1;min-width:150px}
 
   /* Catálogo */
   .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
@@ -242,9 +245,23 @@
        padding:14px 22px;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer}
 
   .toast{position:fixed;left:50%;bottom:84px;transform:translate(-50%,20px);z-index:99;
-         background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;
-         font-size:14px;opacity:0;pointer-events:none;transition:.22s;max-width:88%;text-align:center}
+         background:var(--ink);color:var(--bg);padding:10px 12px 10px 18px;border-radius:999px;
+         font-size:14px;opacity:0;pointer-events:none;transition:.22s;max-width:92%;
+         display:flex;align-items:center;gap:12px}
   .toast.on{opacity:1;transform:translate(-50%,0)}
+  .toast-undo{border:0;background:transparent;color:var(--brand);cursor:pointer;
+         font-size:14px;font-weight:700;padding:6px 12px;border-radius:999px;
+         white-space:nowrap;flex:none}
+  .toast-undo:hover{background:oklch(100% 0 0 / .12)}
+
+  /* aviso de backup: informa sem bloquear, e some quando resolvido */
+  .aviso{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+         background:var(--amber-bg);border:1px solid var(--amber);
+         border-radius:var(--r);padding:11px 13px;margin-bottom:12px;font-size:13.5px}
+  .aviso .txt{flex:1;min-width:150px;color:var(--amber);font-weight:600}
+  .aviso .btn{background:var(--card);border-color:var(--amber);color:var(--ink)}
+  .aviso .fechar{border:0;background:transparent;color:var(--amber);cursor:pointer;
+         font-size:19px;line-height:1;padding:4px 6px;border-radius:8px;flex:none}
 
   #lightbox{position:fixed;inset:0;background:rgba(8,11,14,.86);z-index:50;
         display:none;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
@@ -344,6 +361,15 @@
     .item .sub .tag{font-size:11.5px;padding:3px 9px}
 
     .card-f .btn{min-height:46px;flex:1}
+
+    /* aviso de backup e ação em massa: alvos cheios no celular */
+    .aviso{padding:12px;border-radius:14px}
+    .aviso .txt{flex:1 1 100%;font-size:13.5px}
+    .aviso .btn{min-height:44px;flex:1}
+    .aviso .fechar{width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+    .pedi-tudo{margin-top:12px;padding-top:12px}
+    .pedi-tudo .btn{width:100%;min-height:48px;order:2}
+    .pedi-tudo .hint{flex:1 1 100%;order:1;margin-bottom:2px}
     .obs{font-size:13.5px}
 
     /* --- tabelas viram linhas de lista --- */
@@ -505,6 +531,11 @@
 
   <!-- ============ PEDIDOS ============ -->
   <section id="v-pedidos">
+    <div class="aviso" id="avisoBackup" hidden>
+      <span class="txt" id="avisoTxt"></span>
+      <button class="btn sm" id="avisoBackupBtn">Fazer backup</button>
+      <button class="fechar" id="avisoFechar" aria-label="Lembrar depois">&times;</button>
+    </div>
     <div class="stats" id="stats"></div>
     <div class="filters">
       <input type="search" id="q" placeholder="Buscar por irmão, publicação, grupo…">
@@ -525,6 +556,10 @@
       <p class="hint">Soma das quantidades dos pedidos <b>pendentes</b> e <b>solicitados</b>, agrupados por publicação e idioma.</p>
       <table><thead><tr><th>Publicação</th><th>Idioma</th><th class="num">Qtd.</th></tr></thead>
         <tbody id="tbResumo"></tbody></table>
+      <div class="pedi-tudo" id="boxPediTudo" hidden>
+        <button class="btn primary" id="btnPediTudo">Já pedi tudo isso</button>
+        <span class="hint" id="hintPediTudo"></span>
+      </div>
     </div>
     <div class="panel">
       <h2>Aguardando entrega</h2>
@@ -737,6 +772,7 @@ function catalogoPadrao(){
   return CATALOGO_PADRAO.map(([nome,cat,cod]) => ({nome, cat, cod, img:""}));
 }
 function salvar(){
+  contaAlteracao();
   try{
     localStorage.setItem(KEY_P, JSON.stringify(pedidos));
     localStorage.setItem(KEY_C, JSON.stringify(catalogo));
@@ -744,6 +780,34 @@ function salvar(){
     alert("Não foi possível salvar: o armazenamento do navegador ficou cheio.\n\n" +
           "Isso costuma acontecer quando há muitas fotos de capa. " +
           "Remova algumas imagens na aba Publicações.");
+  }
+}
+
+/* ---------- lembrete de backup ----------
+   Os dados vivem só neste aparelho. O sistema conta as alterações e cobra o
+   backup, em vez de esperar que o usuário lembre sozinho. */
+const KEY_BK = "pedidos-backup";
+const LIMITE_AVISO = 15;
+
+function estadoBackup(){
+  try{ return JSON.parse(localStorage.getItem(KEY_BK)) || {alteracoes:0, ultimo:"", limite:LIMITE_AVISO}; }
+  catch(e){ return {alteracoes:0, ultimo:"", limite:LIMITE_AVISO}; }
+}
+function gravaBackup(o){ try{ localStorage.setItem(KEY_BK, JSON.stringify(o)); }catch(e){} }
+function contaAlteracao(){
+  const b = estadoBackup();
+  b.alteracoes = (b.alteracoes || 0) + 1;
+  gravaBackup(b);
+}
+function renderAviso(){
+  const b = estadoBackup();
+  const limite = b.limite || LIMITE_AVISO;
+  const mostrar = pedidos.length > 0 && (b.alteracoes || 0) >= limite;
+  $("#avisoBackup").hidden = !mostrar;
+  if(mostrar){
+    $("#avisoTxt").textContent = b.ultimo
+      ? `${b.alteracoes} alterações desde o backup de ${fmtData(b.ultimo)}.`
+      : `${b.alteracoes} alterações e nenhum backup feito ainda.`;
   }
 }
 
@@ -759,9 +823,21 @@ function acha(nome){ const k = norm(nome); return catalogo.find(c => norm(c.nome
 function imgDe(nome){ const c = acha(nome); return c && c.img ? c.img : ""; }
 
 let toastT;
-function toast(msg){
-  const t = $("#toast"); t.textContent = msg; t.classList.add("on");
-  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("on"), 2300);
+/* O aviso aceita uma ação de desfazer. Com uma mão só, toque errado acontece;
+   sem isso seria preciso abrir o pedido e editar para consertar. */
+function toast(msg, desfazer){
+  const t = $("#toast");
+  t.innerHTML = "";
+  t.appendChild(el("span", null, msg));
+  if(desfazer){
+    const b = el("button","toast-undo","Desfazer");
+    b.onclick = ()=>{ clearTimeout(toastT); t.classList.remove("on"); desfazer(); };
+    t.appendChild(b);
+  }
+  t.style.pointerEvents = desfazer ? "auto" : "none";
+  t.classList.add("on");
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>t.classList.remove("on"), desfazer ? 7000 : 2300);
 }
 
 /* Miniatura da capa: imagem se houver, senão a inicial do título. */
@@ -806,7 +882,7 @@ function comprime(file, max, cb){
 /* ---------- render ---------- */
 function render(){
   renderStats(); renderLista(); renderResumo();
-  renderIrmaos(); renderCatalogo(); renderDatalists();
+  renderIrmaos(); renderCatalogo(); renderDatalists(); renderAviso();
   const abertos = pedidos.filter(p=>p.status!=="entregue").length;
   $("#subtitle").textContent = pedidos.length
     ? `${pedidos.length} ${pedidos.length>1?"itens":"item"} · ${abertos} em aberto`
@@ -917,9 +993,14 @@ function cardPedido(itens){
       const b = el("button","btn sm primary","→ " + STATUS[p.status].nextLabel);
       b.title = "Marcar como " + STATUS[prox].label.toLowerCase();
       b.onclick = ()=>{
+        const antes = {status:p.status, dataEntrega:p.dataEntrega};
         p.status = prox;
         if(prox === "entregue" && !p.dataEntrega) p.dataEntrega = hoje();
-        salvar(); render(); toast(`${p.pub}: ${STATUS[prox].label.toLowerCase()}`);
+        salvar(); render();
+        toast(`${p.pub}: ${STATUS[prox].label.toLowerCase()}`, ()=>{
+          p.status = antes.status; p.dataEntrega = antes.dataEntrega;
+          salvar(); render(); toast("Desfeito");
+        });
       };
       acts.appendChild(b);
     }
@@ -935,11 +1016,16 @@ function cardPedido(itens){
     f.appendChild(el("span","spacer"));
     const b = el("button","btn sm","Avançar todos");
     b.onclick = ()=>{
+      const antes = avancaveis.map(p=>({p, status:p.status, dataEntrega:p.dataEntrega}));
       avancaveis.forEach(p=>{
         p.status = STATUS[p.status].next;
         if(p.status === "entregue" && !p.dataEntrega) p.dataEntrega = hoje();
       });
-      salvar(); render(); toast("Pedido de " + p0.nome + " atualizado");
+      salvar(); render();
+      toast("Pedido de " + p0.nome + " atualizado", ()=>{
+        antes.forEach(a=>{ a.p.status = a.status; a.p.dataEntrega = a.dataEntrega; });
+        salvar(); render(); toast("Desfeito");
+      });
     };
     f.appendChild(b);
     c.appendChild(f);
@@ -982,6 +1068,16 @@ function renderResumo(){
     const tdn = el("td","num",String(tot)); tdn.style.fontWeight="700";
     tr.appendChild(td); tr.appendChild(el("td")); tr.appendChild(tdn);
     tb.appendChild(tr);
+  }
+
+  // depois de enviar o pedido ao depósito, tudo que estava pendente vira solicitado
+  const pendentes = pedidos.filter(p => p.status === "pendente");
+  $("#boxPediTudo").hidden = !pendentes.length;
+  if(pendentes.length){
+    const qt = pendentes.reduce((s,p)=> s + (p.qtd||1), 0);
+    $("#hintPediTudo").textContent = pendentes.length === 1
+      ? `Marca a publicação pendente como solicitada (${qt} exemplar${qt>1?"es":""}).`
+      : `Marca as ${pendentes.length} publicações pendentes como solicitadas (${qt} exemplares).`;
   }
 
   const tb2 = $("#tbEntregar"); tb2.innerHTML = "";
@@ -1282,6 +1378,19 @@ $("#pDel").onclick = ()=>{
   salvar(); render(); $("#dlgPub").close(); toast("Publicação removida");
 };
 
+/* sem confirmação: a ação é reversível pelo "Desfazer" do aviso */
+$("#btnPediTudo").onclick = ()=>{
+  const alvo = pedidos.filter(p => p.status === "pendente");
+  if(!alvo.length) return;
+  const antes = alvo.map(p=>({p, status:p.status}));
+  alvo.forEach(p => p.status = "solicitado");
+  salvar(); render();
+  toast(alvo.length === 1
+      ? "1 publicação marcada como solicitada"
+      : `${alvo.length} publicações marcadas como solicitadas`,
+    ()=>{ antes.forEach(a => a.p.status = a.status); salvar(); render(); toast("Desfeito"); });
+};
+
 $("#btnNovaPub").onclick = ()=> abrirFormPub(null);
 $("#btnRestaurarCat").onclick = ()=>{
   if(!confirm("Isso traz de volta os títulos da lista padrão que estiverem faltando.\n" +
@@ -1374,7 +1483,17 @@ $("#btnExport").onclick = ()=>{
   a.download = `pedidos-publicacoes-${hoje()}.json`;
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  gravaBackup({alteracoes:0, ultimo:hoje(), limite:LIMITE_AVISO});
+  renderAviso();
   toast("Backup salvo na pasta de downloads");
+};
+$("#avisoBackupBtn").onclick = ()=> $("#btnExport").click();
+/* "lembrar depois": adia sem zerar, para o aviso voltar mais adiante */
+$("#avisoFechar").onclick = ()=>{
+  const b = estadoBackup();
+  b.limite = (b.alteracoes || 0) + LIMITE_AVISO;
+  gravaBackup(b); renderAviso();
+  toast("Ok, aviso adiado");
 };
 $("#btnImport").onclick = ()=> $("#fileImport").click();
 $("#fileImport").onchange = ev=>{
