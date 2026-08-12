@@ -771,8 +771,10 @@ function carregaCatalogo(){
 function catalogoPadrao(){
   return CATALOGO_PADRAO.map(([nome,cat,cod]) => ({nome, cat, cod, img:""}));
 }
-function salvar(){
-  contaAlteracao();
+/* peso -1 vem do "Desfazer": a ação volta ao estado anterior, então
+   ela desconta em vez de somar. Fazer e desfazer deixa a conta zerada. */
+function salvar(peso = 1){
+  contaAlteracao(peso);
   try{
     localStorage.setItem(KEY_P, JSON.stringify(pedidos));
     localStorage.setItem(KEY_C, JSON.stringify(catalogo));
@@ -788,21 +790,25 @@ function salvar(){
    backup, em vez de esperar que o usuário lembre sozinho. */
 const KEY_BK = "pedidos-backup";
 const LIMITE_AVISO = 15;
+/* O aviso só entra em cena depois de uma alteração de verdade nesta sessão.
+   Sem isso ele já apareceria na abertura, cobrando sem que nada tenha mudado. */
+let mudouNestaSessao = false;
 
 function estadoBackup(){
   try{ return JSON.parse(localStorage.getItem(KEY_BK)) || {alteracoes:0, ultimo:"", limite:LIMITE_AVISO}; }
   catch(e){ return {alteracoes:0, ultimo:"", limite:LIMITE_AVISO}; }
 }
 function gravaBackup(o){ try{ localStorage.setItem(KEY_BK, JSON.stringify(o)); }catch(e){} }
-function contaAlteracao(){
+function contaAlteracao(peso){
   const b = estadoBackup();
-  b.alteracoes = (b.alteracoes || 0) + 1;
+  b.alteracoes = Math.max(0, (b.alteracoes || 0) + peso);
   gravaBackup(b);
+  if(peso > 0) mudouNestaSessao = true;
 }
 function renderAviso(){
   const b = estadoBackup();
   const limite = b.limite || LIMITE_AVISO;
-  const mostrar = pedidos.length > 0 && (b.alteracoes || 0) >= limite;
+  const mostrar = mudouNestaSessao && pedidos.length > 0 && (b.alteracoes || 0) >= limite;
   $("#avisoBackup").hidden = !mostrar;
   if(mostrar){
     $("#avisoTxt").textContent = b.ultimo
@@ -999,7 +1005,7 @@ function cardPedido(itens){
         salvar(); render();
         toast(`${p.pub}: ${STATUS[prox].label.toLowerCase()}`, ()=>{
           p.status = antes.status; p.dataEntrega = antes.dataEntrega;
-          salvar(); render(); toast("Desfeito");
+          salvar(-1); render(); toast("Desfeito");
         });
       };
       acts.appendChild(b);
@@ -1024,7 +1030,7 @@ function cardPedido(itens){
       salvar(); render();
       toast("Pedido de " + p0.nome + " atualizado", ()=>{
         antes.forEach(a=>{ a.p.status = a.status; a.p.dataEntrega = a.dataEntrega; });
-        salvar(); render(); toast("Desfeito");
+        salvar(-1); render(); toast("Desfeito");
       });
     };
     f.appendChild(b);
@@ -1388,7 +1394,7 @@ $("#btnPediTudo").onclick = ()=>{
   toast(alvo.length === 1
       ? "1 publicação marcada como solicitada"
       : `${alvo.length} publicações marcadas como solicitadas`,
-    ()=>{ antes.forEach(a => a.p.status = a.status); salvar(); render(); toast("Desfeito"); });
+    ()=>{ antes.forEach(a => a.p.status = a.status); salvar(-1); render(); toast("Desfeito"); });
 };
 
 $("#btnNovaPub").onclick = ()=> abrirFormPub(null);
