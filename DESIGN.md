@@ -90,9 +90,29 @@ Foco visível sempre — `outline: 2px solid` no acento, nunca `outline: none`.
 - **Erro**: inline, junto do campo, em linguagem comum.
 - **Confirmação destrutiva**: sempre, com o nome do que será apagado na frase.
 
+## Configurações
+
+Uma única porta de entrada nos dois tamanhos: a engrenagem no canto superior
+direito. Ela guarda aparência (claro/escuro/automático) e dados (imprimir,
+backup, restaurar). O cabeçalho fica com um controle em vez de quatro.
+
+A apresentação muda com a tela, o gatilho não: no computador o painel abre
+ancorado na engrenagem, com `transform-origin: top right`, porque um popover
+deve nascer de onde foi acionado. No celular sobe como folha inferior com fundo
+escurecido, porque o canto superior direito é o ponto mais difícil de alcançar
+com o polegar.
+
+`visibility` sempre comuta em `0s` (com atraso apenas ao fechar), nunca com
+duração. Uma transição temporizada de `visibility` deixa o painel preso quando
+o relógio de animação não avança, e o estado final passa a depender de algo
+que não se controla.
+
 ## Motion
 
 150–220ms, `cubic-bezier(0.16, 1, 0.3, 1)`. Só `transform` e `opacity`.
+Curva de gaveta para a folha inferior: `cubic-bezier(0.32, 0.72, 0, 1)`.
+Nunca `ease-in` em entrada: atrasa justo o instante que o olho acompanha.
+Nada entra de `scale(0)`; o mínimo é `0.96`.
 
 Movimento comunica estado: entrada da folha inferior, feedback de toque, aviso de
 ação concluída. Nada de decoração, nada de sequência de carregamento.

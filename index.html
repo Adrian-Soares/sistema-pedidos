@@ -95,21 +95,77 @@
   .tabs button[aria-selected="true"]{background:var(--brand-soft);color:var(--brand);font-weight:650}
   .tabs button svg,.tabs button .lbl-curto{display:none}
 
-  /* menu de acoes: inline no computador, menu suspenso no celular */
-  .acoes-btn{display:none}
-  .acoes-itens{display:flex;gap:8px;align-items:center}
+  /* ============ CONFIGURAÇÕES (engrenagem) ============
+     Mesma porta de entrada nos dois tamanhos. No computador abre ancorada
+     na engrenagem; no celular sobe como folha, dentro do alcance do polegar. */
+  .config{position:relative}
+  .config-btn{
+    width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--line);border-radius:12px;background:var(--card);
+    color:var(--ink);cursor:pointer;padding:0;box-shadow:var(--sh);
+    transition:border-color .16s var(--ease),color .16s var(--ease),transform .13s var(--ease)}
+  .config-btn svg{
+    width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6;
+    stroke-linecap:round;stroke-linejoin:round;
+    transition:transform .3s var(--ease)}
+  .config-btn:active{transform:scale(.97)}
+  .config.aberto .config-btn{border-color:var(--brand);color:var(--brand)}
+  .config.aberto .config-btn svg{transform:rotate(45deg)}
+
+  .config-fundo{display:none}
+  .config-alca{display:none}
+
+  .config-painel{
+    position:absolute;right:0;top:calc(100% + 8px);z-index:40;width:264px;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 14px 34px oklch(20% 0.01 155 / .17);
+    padding:12px;
+    /* nasce da engrenagem, nao do centro */
+    transform-origin:top right;
+    opacity:0;transform:scale(.96) translateY(-4px);visibility:hidden;
+    /* visibility comuta em 0s, atrasada no fechar: nunca depende do relogio da
+       animacao para chegar ao estado final, e some so depois do fade */
+    transition:opacity .17s var(--ease), transform .17s var(--ease), visibility 0s linear .17s}
+  /* visibility:hidden ja tira do foco e da arvore de acessibilidade,
+     e ao contrario de display:none permite animar a entrada */
+  .config.aberto .config-painel{
+    opacity:1;transform:none;visibility:visible;
+    transition:opacity .17s var(--ease), transform .17s var(--ease), visibility 0s}
+
+  .config-secao{display:flex;flex-direction:column;gap:6px}
+  .config-secao + .config-secao{
+    margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .config-rot{
+    font-size:11px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.5px;padding:0 4px 2px}
 
   /* seletor de aparencia */
-  .tema{display:flex;align-items:center;gap:8px}
-  .tema-rot{display:none;font-size:12.5px;font-weight:650;color:var(--muted)}
   .tema-ops{display:flex;gap:2px;padding:3px;background:var(--bg);
-            border:1px solid var(--line);border-radius:10px}
+            border:1px solid var(--line);border-radius:11px}
   .tema-ops button{
-    border:0;background:transparent;color:var(--muted);cursor:pointer;
-    padding:5px 10px;border-radius:7px;font-size:13px;white-space:nowrap;
-    transition:background .16s var(--ease),color .16s var(--ease)}
+    flex:1;border:0;background:transparent;color:var(--muted);cursor:pointer;
+    padding:8px 6px;border-radius:8px;font-size:13px;white-space:nowrap;
+    transition:background .16s var(--ease),color .16s var(--ease),transform .13s var(--ease)}
+  .tema-ops button:active{transform:scale(.97)}
   .tema-ops button[aria-checked="true"]{
     background:var(--card);color:var(--brand);font-weight:650;box-shadow:var(--sh)}
+
+  .config-item{
+    display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+    border:0;background:transparent;color:var(--ink);cursor:pointer;
+    padding:9px 10px;border-radius:10px;font-size:14px;
+    transition:background .16s var(--ease),transform .13s var(--ease)}
+  .config-item svg{
+    width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;
+    stroke-linecap:round;stroke-linejoin:round;color:var(--muted)}
+  .config-item span{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .config-item small{font-size:11.5px;color:var(--muted);line-height:1.25}
+  .config-item:active{transform:scale(.98)}
+  @media (hover:hover) and (pointer:fine){
+    .config-item:hover{background:var(--bg)}
+    .config-item:hover svg{color:var(--brand)}
+    .config-btn:hover{border-color:var(--brand)}
+  }
 
   /* foco sempre visivel; nunca outline:none */
   :where(button,input,select,textarea,summary,[tabindex]):focus-visible{
@@ -282,26 +338,42 @@
     header.top h1{font-size:19px}
     header.top .sub{font-size:12px}
 
-    .acoes{position:relative}
-    .acoes-btn{
-      width:44px;height:44px;display:flex;align-items:center;justify-content:center;
-      border:1px solid var(--line);border-radius:12px;background:var(--card);
-      cursor:pointer;color:var(--ink);margin-top:-2px;padding:0}
-    .acoes-btn svg{width:20px;height:20px;fill:currentColor}
-    .acoes.aberto .acoes-btn{border-color:var(--brand);color:var(--brand)}
-    .acoes-itens{
-      display:none;position:absolute;right:0;top:52px;z-index:20;flex-direction:column;
-      gap:4px;padding:6px;background:var(--card);border:1px solid var(--line);
-      border-radius:14px;box-shadow:0 12px 28px oklch(20% 0.01 155 / .18);min-width:176px}
-    .acoes.aberto .acoes-itens{display:flex;animation:surge .16s var(--ease)}
-    @keyframes surge{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-    .acoes-itens .btn{width:100%;text-align:left;min-height:46px;box-shadow:none;border:0}
-    /* no celular o seletor de tema abre em bloco, com rotulo e alvos de 44px */
-    .tema{flex-direction:column;align-items:stretch;gap:6px;
-          padding:6px 8px 10px;border-bottom:1px solid var(--line);margin-bottom:2px}
-    .tema-rot{display:block}
-    .tema-ops{width:100%}
-    .tema-ops button{flex:1;min-height:40px;font-size:13.5px;padding:5px 6px}
+    /* A engrenagem fica no topo, mas o painel sobe de baixo: um menu preso
+       no canto superior direito seria o ponto mais difícil de alcançar. */
+    .config-btn{width:44px;height:44px;margin-top:-1px}
+
+    .config-fundo{
+      display:block;position:fixed;inset:0;z-index:45;
+      background:oklch(12% 0.01 155 / .5);
+      opacity:0;visibility:hidden;
+      transition:opacity .22s var(--ease), visibility 0s linear .22s}
+    .config.aberto .config-fundo{
+      opacity:1;visibility:visible;
+      transition:opacity .22s var(--ease), visibility 0s}
+
+    .config-painel{
+      position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;z-index:46;
+      border-radius:20px 20px 0 0;border-left:0;border-right:0;border-bottom:0;
+      padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));
+      box-shadow:0 -8px 34px oklch(12% 0.01 155 / .26);
+      transform-origin:center bottom;
+      transform:translateY(100%);opacity:1;
+      /* curva de gaveta: sai rápido e assenta devagar */
+      transition:transform .3s cubic-bezier(0.32,0.72,0,1), visibility 0s linear .3s}
+    .config.aberto .config-painel{
+      transform:translateY(0);
+      transition:transform .3s cubic-bezier(0.32,0.72,0,1), visibility 0s}
+
+    .config-alca{
+      display:block;width:38px;height:4px;border-radius:99px;
+      background:var(--line);margin:2px auto 14px}
+
+    .config-secao + .config-secao{margin-top:14px;padding-top:14px}
+    .config-rot{font-size:11.5px}
+    .tema-ops{padding:4px}
+    .tema-ops button{min-height:44px;font-size:14px}
+    .config-item{padding:12px 10px;min-height:52px;font-size:15px;gap:13px}
+    .config-item svg{width:21px;height:21px}
 
     /* --- navegacao fixa no rodape --- */
     .tabs{
@@ -478,7 +550,7 @@
 
   @media print{
     body{background:#fff}
-    .tabs,.filters,.stats,.fab,.btn,.acoes,.toast,.catbar,.item .acts{display:none !important}
+    .tabs,.filters,.stats,.fab,.btn,.config,.toast,.catbar,.item .acts{display:none !important}
     .panel,.card{box-shadow:none;border-color:#ccc;break-inside:avoid}
     .wrap{max-width:none;padding:0}
   }
@@ -489,22 +561,44 @@
 
   <header class="top">
     <h1>Pedidos de Publicações<span class="sub" id="subtitle">—</span></h1>
-    <div class="acoes" id="menuAcoes">
-      <button class="acoes-btn" id="btnMenu" aria-label="Mais ações" aria-expanded="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+    <div class="config" id="menuConfig">
+      <button class="config-btn" id="btnConfig" aria-label="Configurações"
+              aria-expanded="false" aria-controls="painelConfig">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3.1"/>
+          <path d="M19.2 14.8a1.5 1.5 0 00.3 1.66l.05.05a1.82 1.82 0 11-2.58 2.58l-.05-.05a1.5 1.5 0 00-1.66-.3 1.5 1.5 0 00-.91 1.38v.15a1.82 1.82 0 11-3.64 0v-.08a1.5 1.5 0 00-.98-1.37 1.5 1.5 0 00-1.66.3l-.05.05a1.82 1.82 0 11-2.58-2.58l.05-.05a1.5 1.5 0 00.3-1.66 1.5 1.5 0 00-1.38-.91h-.15a1.82 1.82 0 110-3.64h.08a1.5 1.5 0 001.37-.98 1.5 1.5 0 00-.3-1.66l-.05-.05a1.82 1.82 0 112.58-2.58l.05.05a1.5 1.5 0 001.66.3h.07a1.5 1.5 0 00.91-1.38v-.15a1.82 1.82 0 113.64 0v.08a1.5 1.5 0 00.91 1.37 1.5 1.5 0 001.66-.3l.05-.05a1.82 1.82 0 112.58 2.58l-.05.05a1.5 1.5 0 00-.3 1.66v.07a1.5 1.5 0 001.38.91h.15a1.82 1.82 0 110 3.64h-.08a1.5 1.5 0 00-1.37.91z"/>
+        </svg>
       </button>
-      <div class="acoes-itens">
-        <div class="tema" role="radiogroup" aria-label="Aparência">
-          <span class="tema-rot">Aparência</span>
+
+      <div class="config-fundo" id="fundoConfig"></div>
+
+      <div class="config-painel" id="painelConfig" role="dialog" aria-label="Configurações">
+        <div class="config-alca" aria-hidden="true"></div>
+
+        <div class="config-secao" role="radiogroup" aria-label="Aparência">
+          <span class="config-rot">Aparência</span>
           <div class="tema-ops">
             <button type="button" role="radio" data-tema-op="claro"   aria-checked="false">Claro</button>
             <button type="button" role="radio" data-tema-op="escuro"  aria-checked="false">Escuro</button>
             <button type="button" role="radio" data-tema-op="sistema" aria-checked="true">Automático</button>
           </div>
         </div>
-        <button class="btn sm" id="btnPrint">Imprimir</button>
-        <button class="btn sm" id="btnExport">Backup</button>
-        <button class="btn sm" id="btnImport">Restaurar</button>
+
+        <div class="config-secao">
+          <span class="config-rot">Dados</span>
+          <button class="config-item" id="btnPrint">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5"/><path d="M7 18H6a2 2 0 01-2-2v-4a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-1"/><rect x="7" y="15" width="10" height="6" rx="1"/></svg>
+            <span>Imprimir</span>
+          </button>
+          <button class="config-item" id="btnExport">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><path d="M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+            <span>Backup<small>Baixar uma cópia dos pedidos</small></span>
+          </button>
+          <button class="config-item" id="btnImport">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+            <span>Restaurar<small>Trazer de volta um backup</small></span>
+          </button>
+        </div>
       </div>
       <input type="file" id="fileImport" accept="application/json" hidden>
     </div>
@@ -1466,18 +1560,29 @@ document.addEventListener("visibilitychange", ()=>{
 });
 aplicaTema();
 
-/* menu de ações do topo: só existe como menu no celular */
-const menu = $("#menuAcoes");
-function fechaMenu(){ menu.classList.remove("aberto"); $("#btnMenu").setAttribute("aria-expanded","false"); }
-$("#btnMenu").onclick = ev=>{
+/* ---------- configurações (engrenagem) ---------- */
+const menu = $("#menuConfig");
+function menuAberto(){ return menu.classList.contains("aberto"); }
+function abreMenu(){
+  menu.classList.add("aberto");
+  $("#btnConfig").setAttribute("aria-expanded","true");
+}
+function fechaMenu(devolveFoco){
+  if(!menuAberto()) return;
+  menu.classList.remove("aberto");
+  $("#btnConfig").setAttribute("aria-expanded","false");
+  // ao fechar pelo teclado o foco volta para a engrenagem, senão ele se perde
+  if(devolveFoco) $("#btnConfig").focus();
+}
+$("#btnConfig").onclick = ev=>{
   ev.stopPropagation();
-  const abriu = !menu.classList.contains("aberto");
-  menu.classList.toggle("aberto", abriu);
-  $("#btnMenu").setAttribute("aria-expanded", String(abriu));
+  menuAberto() ? fechaMenu() : abreMenu();
 };
-/* trocar o tema mantém o menu aberto: dá para comparar claro e escuro na hora */
-menu.addEventListener("click", ev=>{
-  if(ev.target.closest(".acoes-itens") && !ev.target.closest(".tema")) fechaMenu();
+$("#fundoConfig").onclick = ()=> fechaMenu();
+/* Trocar o tema mantém o painel aberto: dá para comparar claro e escuro na hora.
+   As ações de dados fecham, porque levam para outro lugar. */
+$("#painelConfig").addEventListener("click", ev=>{
+  if(ev.target.closest(".config-item")) fechaMenu();
 });
 document.addEventListener("click", ev=>{ if(!menu.contains(ev.target)) fechaMenu(); });
 
@@ -1528,6 +1633,7 @@ document.addEventListener("keydown", e=>{
   if(e.key === "Escape" && $("#lightbox").classList.contains("on")){
     $("#lightbox").classList.remove("on"); return;
   }
+  if(e.key === "Escape" && menuAberto()){ fechaMenu(true); return; }
   if(e.key === "n" && !e.ctrlKey && !e.metaKey && !e.altKey &&
      !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) &&
      !$("#dlg").open && !$("#dlgPub").open){
