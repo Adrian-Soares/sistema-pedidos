@@ -639,7 +639,7 @@
     <div class="aviso" id="avisoBackup" hidden>
       <span class="txt" id="avisoTxt"></span>
       <button class="btn sm" id="avisoBackupBtn">Fazer backup</button>
-      <button class="fechar" id="avisoFechar" aria-label="Lembrar depois">&times;</button>
+      <button class="fechar" id="avisoFechar" aria-label="Não avisar agora">&times;</button>
     </div>
     <div class="stats" id="stats"></div>
     <div class="filters">
@@ -898,10 +898,14 @@ function salvar(peso = 1){
    Os dados vivem só neste aparelho. O sistema conta as alterações e cobra o
    backup, em vez de esperar que o usuário lembre sozinho. */
 const KEY_BK = "pedidos-backup";
-const LIMITE_AVISO = 15;
-/* O aviso só entra em cena depois de uma alteração de verdade nesta sessão.
-   Sem isso ele já apareceria na abertura, cobrando sem que nada tenha mudado. */
+const LIMITE_AVISO = 25;   // alterações acumuladas que justificam cobrar um backup
+const DIAS_AVISO  = 30;    // ou tempo demais desde o último, com algo por salvar
+
+/* Duas travas para o aviso não virar praga:
+   - só entra em cena depois de uma alteração de verdade nesta sessão;
+   - uma vez dispensado, não volta enquanto o app estiver aberto. */
 let mudouNestaSessao = false;
+let dispensadoNestaSessao = false;
 
 function estadoBackup(){
   try{ return JSON.parse(localStorage.getItem(KEY_BK)) || {alteracoes:0, ultimo:"", limite:LIMITE_AVISO}; }
@@ -914,15 +918,30 @@ function contaAlteracao(peso){
   gravaBackup(b);
   if(peso > 0) mudouNestaSessao = true;
 }
-function renderAviso(){
+/* Cobra backup só quando ele é de fato devido: muito acumulado desde o último,
+   ou tempo demais com coisa por salvar. Sem alteração nenhuma, nunca cobra. */
+function precisaBackup(){
   const b = estadoBackup();
-  const limite = b.limite || LIMITE_AVISO;
-  const mostrar = mudouNestaSessao && pedidos.length > 0 && (b.alteracoes || 0) >= limite;
+  const alt = b.alteracoes || 0;
+  if(!alt) return false;
+  if(alt >= (b.limite || LIMITE_AVISO)) return true;
+  if(b.ultimo){
+    const dias = (Date.now() - new Date(b.ultimo + "T00:00:00").getTime()) / 86400000;
+    if(dias >= DIAS_AVISO) return true;
+  }
+  return false;
+}
+function renderAviso(){
+  const mostrar = mudouNestaSessao && !dispensadoNestaSessao
+                  && pedidos.length > 0 && precisaBackup();
   $("#avisoBackup").hidden = !mostrar;
   if(mostrar){
+    const b = estadoBackup();
+    const n = b.alteracoes;
+    const alt = n === 1 ? "1 alteração" : `${n} alterações`;
     $("#avisoTxt").textContent = b.ultimo
-      ? `${b.alteracoes} alterações desde o backup de ${fmtData(b.ultimo)}.`
-      : `${b.alteracoes} alterações e nenhum backup feito ainda.`;
+      ? `${alt} desde o backup de ${fmtData(b.ultimo)}.`
+      : `${alt} e nenhum backup feito ainda.`;
   }
 }
 
@@ -1710,16 +1729,22 @@ $("#btnExport").onclick = ()=>{
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
   gravaBackup({alteracoes:0, ultimo:hoje(), limite:LIMITE_AVISO});
+  // feito o backup, a conta zera e o aviso volta a ser possível se muito
+  // trabalho novo se acumular depois disso
+  dispensadoNestaSessao = false;
   renderAviso();
   toast("Backup salvo na pasta de downloads");
 };
 $("#avisoBackupBtn").onclick = ()=> $("#btnExport").click();
-/* "lembrar depois": adia sem zerar, para o aviso voltar mais adiante */
+/* Dispensar vale para a sessão inteira: some e não volta enquanto o app
+   estiver aberto, por mais alterações que aconteçam. O limite também sobe,
+   para não cobrar de novo assim que o app for reaberto. */
 $("#avisoFechar").onclick = ()=>{
+  dispensadoNestaSessao = true;
   const b = estadoBackup();
   b.limite = (b.alteracoes || 0) + LIMITE_AVISO;
   gravaBackup(b); renderAviso();
-  toast("Ok, aviso adiado");
+  toast("Certo, não aviso mais agora");
 };
 $("#btnImport").onclick = ()=> $("#fileImport").click();
 $("#fileImport").onchange = ev=>{
