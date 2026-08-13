@@ -241,9 +241,18 @@
   tbody tr:last-child td{border-bottom:0}
   .names{font-size:12.5px;color:var(--muted);margin-top:2px}
   .cellpub{display:flex;gap:10px;align-items:center}
-  .pedi-tudo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  .pedi-tudo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
              margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
   .pedi-tudo .hint{margin:0;flex:1;min-width:150px}
+  #btnCompartilhar{display:inline-flex;align-items:center;gap:8px}
+  #btnCompartilhar svg{width:17px;height:17px;fill:none;stroke:currentColor;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;color:var(--muted)}
+  @media (hover:hover) and (pointer:fine){
+    #btnCompartilhar:hover svg{color:var(--brand)}
+  }
+
+  /* aviso de publicacao repetida: informa, nunca bloqueia */
+  .linha-aviso{font-size:12.5px;color:var(--amber);line-height:1.35;padding:1px 2px 0}
 
   /* Catálogo */
   .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
@@ -439,9 +448,11 @@
     .aviso .txt{flex:1 1 100%;font-size:13.5px}
     .aviso .btn{min-height:44px;flex:1}
     .aviso .fechar{width:44px;height:44px;display:flex;align-items:center;justify-content:center}
-    .pedi-tudo{margin-top:12px;padding-top:12px}
-    .pedi-tudo .btn{width:100%;min-height:48px;order:2}
+    .pedi-tudo{margin-top:12px;padding-top:12px;gap:8px}
+    .pedi-tudo .btn{width:100%;min-height:48px;justify-content:center}
     .pedi-tudo .hint{flex:1 1 100%;order:1;margin-bottom:2px}
+    #btnPediTudo{order:2}
+    #btnCompartilhar{order:3}
     .obs{font-size:13.5px}
 
     /* --- tabelas viram linhas de lista --- */
@@ -650,8 +661,12 @@
       <p class="hint">Soma das quantidades dos pedidos <b>pendentes</b> e <b>solicitados</b>, agrupados por publicação e idioma.</p>
       <table><thead><tr><th>Publicação</th><th>Idioma</th><th class="num">Qtd.</th></tr></thead>
         <tbody id="tbResumo"></tbody></table>
-      <div class="pedi-tudo" id="boxPediTudo" hidden>
-        <button class="btn primary" id="btnPediTudo">Já pedi tudo isso</button>
+      <div class="pedi-tudo" id="acoesResumo" hidden>
+        <button class="btn" id="btnCompartilhar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><path d="M8 6l4-4 4 4"/><path d="M12 2.5v13"/></svg>
+          Compartilhar lista
+        </button>
+        <button class="btn primary" id="btnPediTudo" hidden>Já pedi tudo isso</button>
         <span class="hint" id="hintPediTudo"></span>
       </div>
     </div>
@@ -1170,9 +1185,11 @@ function renderResumo(){
     tb.appendChild(tr);
   }
 
-  // depois de enviar o pedido ao depósito, tudo que estava pendente vira solicitado
+  // compartilhar vale sempre que houver algo a pedir; "já pedi" só com pendentes
   const pendentes = pedidos.filter(p => p.status === "pendente");
-  $("#boxPediTudo").hidden = !pendentes.length;
+  $("#acoesResumo").hidden = !linhas.length;
+  $("#btnPediTudo").hidden = !pendentes.length;
+  $("#hintPediTudo").textContent = "";
   if(pendentes.length){
     const qt = pendentes.reduce((s,p)=> s + (p.qtd||1), 0);
     $("#hintPediTudo").textContent = pendentes.length === 1
@@ -1300,6 +1317,9 @@ function linhaItem(item){
   inIdi.value = item ? (item.idioma||"Português") : "Português";
   lrow.appendChild(inQtd); lrow.appendChild(inIdi);
   lc.appendChild(lrow);
+  const aviso = el("div","linha-aviso");
+  aviso.hidden = true;
+  lc.appendChild(aviso);
   wrap.appendChild(lc);
 
   const x = el("button","lx","×");
@@ -1307,6 +1327,7 @@ function linhaItem(item){
   x.onclick = ()=>{
     if($("#itens").children.length <= 1){ toast("O pedido precisa de ao menos uma publicação"); return; }
     wrap.remove();
+    avisaRepetidos();
   };
   wrap.appendChild(x);
 
@@ -1314,6 +1335,7 @@ function linhaItem(item){
   inPub.addEventListener("change", ()=>{
     wrap.replaceChild(miniatura(inPub.value, "lthumb"), wrap.firstChild);
   });
+  inPub.addEventListener("input", avisaRepetidos);
 
   wrap.ler = ()=>({
     pub:    cap(inPub.value),
@@ -1321,6 +1343,40 @@ function linhaItem(item){
     idioma: cap(inIdi.value) || "Português"
   });
   return wrap;
+}
+
+/* Avisa que a pessoa já tem aquela publicação em aberto, ou que ela se repete
+   dentro do próprio pedido. Nunca bloqueia: quem decide se é engano é o usuário. */
+function avisaRepetidos(){
+  const nome = cap($("#fNome").value);
+  const linhas = [...$("#itens").children];
+  const contagem = new Map();
+  linhas.forEach(l=>{
+    const k = norm(l.ler().pub);
+    if(k) contagem.set(k, (contagem.get(k) || 0) + 1);
+  });
+
+  linhas.forEach(l=>{
+    const av = l.querySelector(".linha-aviso");
+    const pub = l.ler().pub;
+    if(!pub){ av.hidden = true; return; }
+
+    const jaEmAberto = nome && pedidos.some(p =>
+      norm(p.nome) === norm(nome) &&
+      norm(p.pub)  === norm(pub) &&
+      p.status !== "entregue" &&
+      !(editIds && editIds.includes(p.id)));
+
+    if(jaEmAberto){
+      av.textContent = "Esse irmão já tem essa publicação em aberto.";
+      av.hidden = false;
+    } else if(contagem.get(norm(pub)) > 1){
+      av.textContent = "Essa publicação está repetida neste pedido.";
+      av.hidden = false;
+    } else {
+      av.hidden = true;
+    }
+  });
 }
 
 function abrirForm(itens){
@@ -1339,14 +1395,18 @@ function abrirForm(itens){
   if(itens) itens.forEach(p => box.appendChild(linhaItem(p)));
   else box.appendChild(linhaItem(null));
 
+  avisaRepetidos();
   $("#dlg").showModal();
   setTimeout(()=>$("#fNome").focus(), 50);
 }
+
+$("#fNome").addEventListener("input", avisaRepetidos);
 
 $("#btnAddItem").onclick = ()=>{
   const l = linhaItem(null);
   $("#itens").appendChild(l);
   l.querySelector("input").focus();
+  avisaRepetidos();
 };
 
 $("#form").addEventListener("submit", ev=>{
@@ -1476,6 +1536,61 @@ $("#pDel").onclick = ()=>{
   if(!confirm(msg)) return;
   catalogo = catalogo.filter(c => norm(c.nome) !== norm(editPubNome));
   salvar(); render(); $("#dlgPub").close(); toast("Publicação removida");
+};
+
+/* ---------- compartilhar a lista ----------
+   O sistema já sabe o que precisa ser pedido; sem isto a informação morre aqui
+   e o pedido acaba sendo redigitado no WhatsApp. Vai sem os nomes dos irmãos:
+   é uma lista de pedido, não de distribuição. */
+function textoDoResumo(){
+  const map = new Map();
+  pedidos.filter(p => p.status === "pendente" || p.status === "solicitado").forEach(p=>{
+    const k = norm(p.pub) + "|" + norm(p.idioma || "Português");
+    if(!map.has(k)) map.set(k, {pub:p.pub, idioma:p.idioma || "Português", qtd:0});
+    map.get(k).qtd += (p.qtd || 1);
+  });
+  const linhas = [...map.values()].sort((a,b)=> b.qtd - a.qtd || a.pub.localeCompare(b.pub,"pt-BR"));
+  if(!linhas.length) return "";
+  const total = linhas.reduce((s,o)=> s + o.qtd, 0);
+  return [
+    `Pedido de publicações — ${fmtData(hoje())}`,
+    "",
+    ...linhas.map(o => `${o.qtd}× ${o.pub}` +
+        (o.idioma && o.idioma !== "Português" ? ` (${o.idioma.toLowerCase()})` : "")),
+    "",
+    `Total: ${total} exemplar${total > 1 ? "es" : ""}`
+  ].join("\n");
+}
+
+function copiaAntiga(texto){
+  const ta = el("textarea");
+  ta.value = texto;
+  ta.style.position = "fixed"; ta.style.top = "-1000px"; ta.setAttribute("readonly","");
+  document.body.appendChild(ta);
+  ta.select(); ta.setSelectionRange(0, texto.length);
+  let ok = false;
+  try{ ok = document.execCommand("copy"); }catch(e){}
+  ta.remove();
+  toast(ok ? "Lista copiada" : "Não foi possível copiar a lista");
+}
+function copiaTexto(texto){
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(texto)
+      .then(()=> toast("Lista copiada"), ()=> copiaAntiga(texto));
+  } else copiaAntiga(texto);
+}
+
+$("#btnCompartilhar").onclick = async ()=>{
+  const texto = textoDoResumo();
+  if(!texto){ toast("Não há nada para pedir agora"); return; }
+  if(navigator.share){
+    try{ await navigator.share({text: texto}); return; }
+    catch(e){
+      if(e && e.name === "AbortError") return;   // o usuário fechou a folha de compartilhar
+      /* qualquer outra falha cai para a cópia */
+    }
+  }
+  copiaTexto(texto);
 };
 
 /* sem confirmação: a ação é reversível pelo "Desfazer" do aviso */
